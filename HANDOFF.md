@@ -10,6 +10,8 @@ A Discord Rich Presence card for MLBB played on the phone: game, timer, mode, pa
 - Mode, hero and party size are known from draft pick. Level is not decoded (fixed in `.env`).
 - The live room link format is unknown (PLAN.md §6.2).
 
+- Autostart: `tools/install_autostart.ps1` puts a hidden start script in the Windows Startup folder (log `%LOCALAPPDATA%\mlbb_presenceridge.log`). While MLBB runs, the bridge starts the lobby capture and, with `FIXLAG_DIR` in `.env`, the FixLag chat viewer; it stops both when MLBB closes.
+
 ## Active tasks
 - [handoffs/discord-presence.md](handoffs/discord-presence.md) — Phase 1 bridge built; needs a live test evening and the Live share link.
 

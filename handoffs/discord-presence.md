@@ -1,5 +1,5 @@
 Status: waiting
-Needs user: answers to the 6 questions in PLAN.md §11
+Needs user: run the Phase 0 steps in docs/findings.md and fill in the results
 Updated: 2026-11-27 21:40
 Agent: Claude desktop app (Code tab), Opus 5.5, first session
 

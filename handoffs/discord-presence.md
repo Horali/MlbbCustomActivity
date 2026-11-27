@@ -1,32 +1,30 @@
 Status: active
-Needs user: MLBB Live share link (PLAN.md §6.2) and answers to PLAN.md §11
-Updated: 2026-11-28 05:00
+Needs user: one play session for the live test
+Updated: 2026-11-28 05:40
 Agent: Claude desktop app (Code tab), Opus 5.5, Phase 1 session
 
 ## Goal and why
-Show a Discord Rich Presence card while the user plays MLBB on the phone (SM-S936B). Order on the card: IGN and level first, then hero, mode, phase, party badge, timer. Later a Watch button to the user's MLBB live room.
+Show a Discord Rich Presence card while the user plays MLBB on the phone (SM-S936B). Order on the card: IGN and level first, then hero, mode, phase, party badge, timer. The Watch button is parked (see Decisions).
 
 ## Current state
 - Phase 0 done. Discord app "Mobile Legends Bang Bang" (ID in `.env`). `tools/phase0_presence.py` sends a fixed card. The user saw it on their profile.
 - App icon (Developer Portal) set to the official logo on 2026-11-28; it shows in voice channel lists. Assets: large `mlbb_logo` (official Miya icon), badges `squadog_1..5` (built from the game's party icons). Game art is local only (`.gitignore`).
-- Phase 1 bridge built and pushed: `mlbb_presence/` (19 tests pass). Not yet run against a live match with Discord.
+- Phase 1 bridge built and pushed: `mlbb_presence/` (20 tests pass). Not yet run against a live match with Discord.
 - Checked on a FixLag pcap replay (`draft_LIVE6.pcap`): the feed gives IGN `naradira`, Ranked, 5-stack, hero Nolan.
 - Dry run on the phone (wireless, 2 adb entries): auto serial pick works; MLBB closed -> `CLOSED`.
-- FixLag `players[]` has `name`, `hero_name`, `party_size`, but no level. The IGN comes from `players[local_uid].name`, else `.env`. Level stays from `.env`.
+- FixLag `players[]` has `name`, `hero_name`, `party_size`, but no level. IGN and level come from the game prefs over root adb (`OfflineRoleName`, `OfflineRoleLevel` = 113); FixLag's name wins in a match; `.env` is the fallback.
 - Watch button: off unless `LIVE=1` and `WATCH_URL` is https.
 
 ## Next steps
 1. Live test evening: in FixLag run `python -m tools.chat_viewer --adb <serial>`. Here run `python -m mlbb_presence` (`--dry-run -v` prints instead of sending). Check mode, badge, hero, timer from a second account.
 2. Tune `BATTLE_SILENCE` (20 s) in `state.py` if "Match ended" shows too early or late.
-3. Fill the open rows in `docs/findings.md` (buttons on mobile, scheme button, Competing).
-4. Ask the user for the MLBB Live share link to test the Watch button (PLAN.md §6.2).
-5. Phase 2 (PLAN.md §8): "I am live" switch, tray menu.
+3. Test Competing / `status_display_type` and fill that row in `docs/findings.md`.
+4. Phase 2 (PLAN.md §8): "I am live" switch, tray menu.
 
 ## Open problems
-- Live room share link: a server short link, not in the scripts (see docs/findings.md). Needs one Share tap in a Live.
 - Lobby party size before draft: needs TCP 30101 research.
 - No match-end event in FixLag: the bridge uses a 20 s silence timeout after Battle.
-- Level: read from the game prefs (`OfflineRoleLevel`, 113). Needs root; else `.env`.
+- Unrooted phones: no level from prefs and no FixLag capture (tcpdump needs root). Possible fix: PCAPdroid (untested).
 
 ## Decisions and lessons (keep)
 - Option A (PC bridge, Python, reuse FixLag) first; Option B (Android app) later.
@@ -35,6 +33,8 @@ Show a Discord Rich Presence card while the user plays MLBB on the phone (SM-S93
 - Thin 3-person art reads as "duo" at small size. Use the game's own icons.
 - Badge icons: `Atlas_Clearing.unity3d` (texture `Atlas_Clearing_main` + `_mask`). Crops in the 1024 atlas: solo (770,385,800,425), duo (855,333,882,362), 4Q (725,345,770,378), 5Q (604,703,657,736). Trio = 5Q columns 8..32.
 - Official icon: `base.apk` `res/mipmap-xxxhdpi-v4/ic_launcher_background.png`, alpha bbox (42,42,391,391), upscaled to 1024.
+- Watch button PARKED by the user (2026-11-28). No link opens a Live channel or profile: My Channel and the viewer side have no Share button, and the scripts have no route (docs/findings.md). If revived: button `https://applink.mobilelegends.com/` with label "Watch in MLBB · ID 30028189" (viewer types the ID), or a small GitHub Pages helper that copies the ID and opens MLBB.
+- Use Haiku subagents for adb calls and big file reads (user rule).
 - Git Bash rewrites `/sdcard/...`: set `MSYS_NO_PATHCONV=1`.
 
 ## Where to look

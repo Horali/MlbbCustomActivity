@@ -10,6 +10,7 @@ A Discord Rich Presence card for MLBB played on the phone: game, timer, mode, pa
 - The live room link format is unknown (PLAN.md §6.2).
 
 ## Active tasks
+- [handoffs/lobby-state.md](handoffs/lobby-state.md) — lobby mode and party badge built; needs a bridge restart and a check with a friend.
 - [handoffs/discord-presence.md](handoffs/discord-presence.md) — Phase 1 bridge built; needs a live test evening and the Live share link.
 
 ## Where to look

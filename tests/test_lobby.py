@@ -207,3 +207,13 @@ def test_arcade_mode_labels():
     assert LobbyInfo(ROOM, 3030, 2).mode == "Card Brawl"
     assert LobbyInfo(ROOM, 4123, 1).mode == "Arcade"
     assert LobbyInfo(ROOM, 99, 1).mode == ""
+
+
+def test_draft_without_mode_uses_lobby_room():
+    from mlbb_presence.match import MatchInfo
+    m = StateMachine()
+    m.update(ON, None, None, 2000.0, LobbyInfo(ROOM, 3030, 3))
+    s = m.update(ON, MatchInfo("x", S.DRAFT), 1.0, 2010.0, None)
+    assert s.phase == S.DRAFT and s.mode == "Card Brawl" and s.party_size == 3
+    s = m.update(ON, MatchInfo("x", S.DRAFT, mode="Ranked", party_size=2), 1.0, 2011.0, None)
+    assert s.mode == "Ranked" and s.party_size == 2  # FixLag wins when it knows the mode

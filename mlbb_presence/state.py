@@ -42,10 +42,13 @@ class StateMachine:
     last_match: MatchInfo | None = None
     ended: set[str] = field(default_factory=set)
     lobby: LobbyInfo | None = None
+    last_room: LobbyInfo | None = None  # the room before the match: fills an unknown mode
 
     def update(self, game: GameInfo | None, match: MatchInfo | None,
                pkt_age: float | None, now: float, lobby: LobbyInfo | None = None) -> GameState:
         self.lobby = lobby
+        if lobby is not None:
+            self.last_room = lobby
         # Phone not reachable: keep what we had, but never invent a running game.
         if game is None:
             if self.phase == CLOSED:
@@ -111,13 +114,22 @@ class StateMachine:
                 is_custom=room.is_custom,
                 party_size=room.party_size,
             )
+        mode = m.mode if m else ""
+        party = m.party_size if m else None
+        is_custom = m.is_custom if m else False
+        prev = self.last_room
+        if m is not None and prev is not None and (not mode or mode.startswith("Mode ")):
+            # FixLag does not know arcade modes (e.g. Card Brawl): use the lobby room.
+            mode = prev.mode or mode
+            party = party or prev.party_size
+            is_custom = is_custom or prev.is_custom
         return GameState(
             phase=self.phase,
             session_start=self.session_start,
             match_start=self.match_start,
-            mode=m.mode if m else "",
-            is_custom=m.is_custom if m else False,
-            party_size=m.party_size if m else None,
+            mode=mode,
+            is_custom=is_custom,
+            party_size=party,
             hero=m.hero if m else "",
             ign=m.ign if m else "",
         )

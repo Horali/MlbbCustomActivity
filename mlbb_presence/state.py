@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .game import GameInfo
+from .lobby import LobbyInfo
 from .match import MatchInfo
 
 # Phases
@@ -40,9 +41,11 @@ class StateMachine:
     after_until: float | None = None
     last_match: MatchInfo | None = None
     ended: set[str] = field(default_factory=set)
+    lobby: LobbyInfo | None = None
 
     def update(self, game: GameInfo | None, match: MatchInfo | None,
-               pkt_age: float | None, now: float) -> GameState:
+               pkt_age: float | None, now: float, lobby: LobbyInfo | None = None) -> GameState:
+        self.lobby = lobby
         # Phone not reachable: keep what we had, but never invent a running game.
         if game is None:
             if self.phase == CLOSED:
@@ -99,6 +102,15 @@ class StateMachine:
 
     def _state(self) -> GameState:
         m = self.last_match if self.phase in (DRAFT, LOADING, BATTLE, AFTER) else None
+        room = self.lobby if self.phase == LOBBY else None
+        if room is not None:
+            return GameState(
+                phase=self.phase,
+                session_start=self.session_start,
+                mode=room.mode,
+                is_custom=room.is_custom,
+                party_size=room.party_size,
+            )
         return GameState(
             phase=self.phase,
             session_start=self.session_start,

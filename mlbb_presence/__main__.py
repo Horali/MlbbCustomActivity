@@ -1,7 +1,8 @@
 """Run the bridge: python -m mlbb_presence [--dry-run] [-v]
 
-Start the FixLag chat viewer first for mode, hero and party size.
-Without it, the card shows the lobby/idle state and the session timer only.
+Start the FixLag chat viewer first for mode, hero and party size in a match.
+The lobby room (mode and party before draft) comes from a second tcpdump on the
+lobby connection, started here (needs root adb; --no-lobby turns it off).
 """
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ from dataclasses import replace
 
 from .config import Config
 from .game import GameWatcher
+from .lobby import LobbyTracker, run_capture
 from .mapper import to_presence
 from .match import MatchFeed, run_feed
 from .sender import Sender
@@ -28,6 +30,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="mlbb_presence")
     ap.add_argument("--dry-run", action="store_true", help="print the presence, do not send it")
     ap.add_argument("-v", "--verbose", action="store_true")
+    ap.add_argument("--no-lobby", action="store_true", help="do not capture the lobby room")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
@@ -42,6 +45,10 @@ def main(argv: list[str] | None = None) -> int:
     threading.Thread(target=run_feed, args=(cfg.viewer_url, feed, stop), daemon=True).start()
 
     game = GameWatcher(cfg.adb, cfg.adb_serial)
+    lobby = LobbyTracker()
+    if not args.no_lobby:
+        threading.Thread(target=run_capture, args=(cfg.adb, lambda: game.serial, lobby, stop),
+                         daemon=True).start()
     machine = StateMachine()
     sender = None if args.dry_run else Sender(cfg.app_id)
     last_printed: object = ()
@@ -56,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
                     logging.info("profile from phone: %s, level %s", cfg.ign, cfg.level)
                 profile_at = now
             match, age = feed.current(now)
-            state = machine.update(game.poll(), match, age, now)
+            state = machine.update(game.poll(), match, age, now, lobby.current(now))
             payload = to_presence(state, cfg)
             if sender is not None:
                 sender.push(payload, now)

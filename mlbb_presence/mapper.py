@@ -47,10 +47,11 @@ def to_presence(s: GameState, cfg: Config) -> dict[str, Any] | None:
     details = " · ".join(x for x in (ign, level) if x) or GAME_NAME
 
     in_match = s.phase in (DRAFT, LOADING, BATTLE, AFTER)
+    with_mode = in_match or s.phase == LOBBY  # the lobby room also knows mode and party
     parts = []
     if in_match and s.hero:
         parts.append(s.hero)
-    if in_match and s.mode:
+    if with_mode and s.mode:
         parts.append(s.mode)
     parts.append(PHASE_TEXT.get(s.phase, ""))
     state = " · ".join(p for p in parts if p)
@@ -69,7 +70,7 @@ def to_presence(s: GameState, cfg: Config) -> dict[str, Any] | None:
         out["start"] = int(start)
 
     size = s.party_size
-    if in_match and not s.is_custom and size in BADGE_TEXT:
+    if with_mode and not s.is_custom and size in BADGE_TEXT:
         out["party_size"] = [size, 5]
         out["small_image"] = f"{cfg.badge_prefix}{size}"
         out["small_text"] = BADGE_TEXT[size]

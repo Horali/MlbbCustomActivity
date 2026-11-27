@@ -44,5 +44,5 @@ Write yes / no and one line of notes for each test. See PLAN.md §8 Phase 0.
 - Message ids (server to client): `11201` create reply (only you in `l3`), `11203` and `20103` a player joined, `11213` room info changed, `11205` a player left (`b6.s1` = who left, `b6.s2` = room after), `11241` keepalive every 5 s `{v0 room id, v1 pvp type}`. Client asks: `11200` create, `11204` leave, `11206` invite.
 - `11733` is the public room list (other rooms): not my room. `10208` stays undecoded (account data).
 - Event modes use other pvp types (seen: 3030). The card shows no mode name for unknown types.
-- Limit: if the bridge starts while you already sit in a room, it knows the mode (keepalive) but not the party size until the room changes.
+- Limit: a bridge started inside a room gets only keepalives (mode, no player list). It reuses the size saved in `.lobby_room.json`; if a friend joined while the bridge was off, it shows solo until the room changes. The room id stays the same when you change the mode.
 - Result: `mlbb_presence/lobby.py` runs its own `tcpdump "tcp src port 30101"` and the card shows "Ranked · In lobby" with the party badge. Checked live: "Brawl · In lobby".

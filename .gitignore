@@ -29,3 +29,6 @@ Thumbs.db
 
 # Phone screenshots / local artefacts
 screen*.png
+
+# Art taken from the game files (Moonton): keep local only
+assets/squadog_*

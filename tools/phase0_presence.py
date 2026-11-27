@@ -47,7 +47,7 @@ def main() -> None:
         start=int(time.time()),
         large_image=os.environ.get("LARGE_IMAGE", "mlbb"),
         large_text=f"Playing as {hero}",
-        small_image=os.environ.get("SMALL_IMAGE", "squad_3"),
+        small_image=os.environ.get("SMALL_IMAGE", "squadog_3"),
         small_text="Trio queue (3 of 5)",
         buttons=[
             {"label": "Watch my stream", "url": watch},

@@ -29,7 +29,7 @@ class Config:
     app_id: str
     ign: str = ""
     level: str = ""
-    large_image: str = "mlbb_logo"
+    large_image: str = "mlbb_icon"
     badge_prefix: str = "squadog_"
     watch_url: str = ""
     live: bool = False
@@ -46,7 +46,7 @@ class Config:
             app_id=env("DISCORD_APP_ID", ""),
             ign=env("IGN", ""),
             level=env("LEVEL", ""),
-            large_image=env("LARGE_IMAGE", "mlbb_logo"),
+            large_image=env("LARGE_IMAGE", "mlbb_icon"),
             badge_prefix=env("BADGE_PREFIX", "squadog_"),
             watch_url=env("WATCH_URL", ""),
             live=_flag("LIVE"),

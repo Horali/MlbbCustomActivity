@@ -22,7 +22,7 @@ def test_lobby_puts_name_and_level_first():
     assert p["details"] == "naradira · Lv. 86"
     assert p["state"] == "In lobby"
     assert p["start"] == 1000
-    assert p["large_image"] == "mlbb_logo"
+    assert p["large_image"] == "mlbb_icon"
     assert "small_image" not in p and "buttons" not in p
 
 

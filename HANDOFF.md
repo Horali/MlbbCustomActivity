@@ -6,7 +6,7 @@ A Discord Rich Presence card for MLBB played on the phone: game, timer, mode, pa
 ## Current state
 - Phase 0 done: the Discord app exists and `tools/phase0_presence.py` shows a test card (IGN, level, hero, game party badge, official icon).
 - Phase 1 bridge built: `mlbb_presence/` (`python -m mlbb_presence`). It reads `adb shell ps` and the FixLag chat viewer SSE `/events`, and sends presence over Discord IPC.
-- Lobby room: mode and party size come from TCP 30101 (`mlbb_presence/lobby.py`, own tcpdump; message map in `docs/findings.md`). The party size is saved in `.lobby_room.json` for restarts. Badge icons are off (`BADGE_ICON=1` brings them back); the "(n of 5)" text stays.
+- Lobby room: mode and party size come from TCP 30101 (`mlbb_presence/lobby.py`, own tcpdump; message map in `docs/findings.md`). The party size is saved in `.lobby_room.json` for restarts. Badge = `party_1..5` (dark people icons from `tools/make_party_icons.py`, uploaded 2026-11-28; `BADGE_ICON=0` hides them). The "(n of 5)" text is plain state text, not Discord party_size, so the timer keeps its own line.
 - Mode, hero and party size are known from draft pick. Level is not decoded (fixed in `.env`).
 - The live room link format is unknown (PLAN.md §6.2).
 

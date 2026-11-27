@@ -16,7 +16,7 @@ Show a Discord Rich Presence card while the user plays MLBB on the phone (SM-S93
 - Watch button: off unless `LIVE=1` and `WATCH_URL` is https.
 
 ## Next steps
-1. Live test evening: in FixLag run `python -m tools.chat_viewer --adb <serial>`. Here run `python -m mlbb_presence` (`--dry-run -v` prints instead of sending). Check mode, badge, hero, timer from a second account.
+1. Live test evening: in FixLag run `python -m tools.chat_viewer --adb <serial> --port 8790` (ClipMaker holds 8765/8766). Here run `python -m mlbb_presence` (`--dry-run -v` prints instead of sending). Check mode, badge, hero, timer from a second account.
 2. Tune `BATTLE_SILENCE` (20 s) in `state.py` if "Match ended" shows too early or late.
 3. Test Competing / `status_display_type` and fill that row in `docs/findings.md`.
 4. Phase 2 (PLAN.md §8): "I am live" switch, tray menu.

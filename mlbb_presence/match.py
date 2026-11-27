@@ -113,6 +113,9 @@ def run_feed(url: str, feed: MatchFeed, stop: threading.Event) -> None:
     while not stop.is_set():
         try:
             with urllib.request.urlopen(url, timeout=15) as resp:
+                ctype = resp.headers.get("Content-Type", "")
+                if "text/event-stream" not in ctype:
+                    raise ValueError(f"not the chat viewer ({ctype or 'no content type'}) at {url}")
                 delay = 2.0
                 log.info("chat viewer connected: %s", url)
                 lines = (b.decode("utf-8", "replace") for b in resp)

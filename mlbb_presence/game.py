@@ -1,6 +1,8 @@
 """Game watcher: is MLBB running on the phone, is it on screen, and since when."""
 from __future__ import annotations
 
+import html
+import re
 import subprocess
 import time
 from dataclasses import dataclass
@@ -52,6 +54,18 @@ def parse_foreground(output: str) -> bool:
     return False
 
 
+PREFS = f"/data/data/{PACKAGE}/shared_prefs/{PACKAGE}.v2.playerprefs.xml"
+_PREF_RE = re.compile(r'name="OfflineRole(Name|Level)"(?: value="([^"]*)" />|>([^<]*)<)')
+
+
+def parse_profile(text: str) -> tuple[str, str]:
+    """(ign, level) from the game's player prefs. The game saves the last role here."""
+    found = {}
+    for key, attr, body in _PREF_RE.findall(text):
+        found[key] = html.unescape(attr or body).strip()
+    return found.get("Name", ""), found.get("Level", "")
+
+
 def pick_device(devices_output: str) -> str:
     """First ready serial in `adb devices` output. USB serials win over wireless ones."""
     ready = [ln.split()[0] for ln in devices_output.splitlines()[1:]
@@ -84,6 +98,11 @@ class GameWatcher:
         if out is None and not self.fixed:
             self.serial = ""  # wireless port changed: pick again next time
         return out
+
+    def profile(self) -> tuple[str, str]:
+        """(ign, level) from the phone. Needs root; ("", "") when not available."""
+        out = self._shell(f"su -c 'grep -E OfflineRole {PREFS}'") or ""
+        return parse_profile(out)
 
     def poll(self) -> GameInfo | None:
         """None means the phone is not reachable."""

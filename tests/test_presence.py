@@ -176,3 +176,11 @@ def test_pick_device_prefers_usb():
     assert pick_device(out) == "RRCY1032Y6F"
     assert pick_device("List of devices attached\n192.168.1.6:5555\tdevice\n") == "192.168.1.6:5555"
     assert pick_device("List of devices attached\n") == ""
+
+
+def test_parse_profile_reads_name_and_level():
+    from mlbb_presence.game import parse_profile
+    text = ('    <string name="OfflineRoleName">nara&amp;dira</string>\n'
+            '    <int name="OfflineRoleLevel" value="113" />\n')
+    assert parse_profile(text) == ("nara&dira", "113")
+    assert parse_profile("") == ("", "")

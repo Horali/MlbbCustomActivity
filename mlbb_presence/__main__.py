@@ -11,6 +11,7 @@ import logging
 import sys
 import threading
 import time
+from dataclasses import replace
 
 from .config import Config
 from .game import GameWatcher
@@ -20,6 +21,7 @@ from .sender import Sender
 from .state import StateMachine
 
 POLL_SECONDS = 5.0
+PROFILE_SECONDS = 600.0  # re-read IGN and level from the phone every 10 min
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -43,9 +45,16 @@ def main(argv: list[str] | None = None) -> int:
     machine = StateMachine()
     sender = None if args.dry_run else Sender(cfg.app_id)
     last_printed: object = ()
+    profile_at = 0.0
     try:
         while True:
             now = time.time()
+            if now - profile_at >= PROFILE_SECONDS:
+                ign, level = game.profile()
+                if ign or level:
+                    cfg = replace(cfg, ign=ign or cfg.ign, level=level or cfg.level)
+                    logging.info("profile from phone: %s, level %s", cfg.ign, cfg.level)
+                profile_at = now
             match, age = feed.current(now)
             state = machine.update(game.poll(), match, age, now)
             payload = to_presence(state, cfg)

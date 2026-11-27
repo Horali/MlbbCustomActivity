@@ -43,6 +43,6 @@ Write yes / no and one line of notes for each test. See PLAN.md §8 Phase 0.
 - `RoomInfo` tags = declaration order minus 1: `v0` room id, `v1` `uiPVPType` (1 Classic, 2 Ranked, 4 Brawl, 6 Custom), `v2` `uiRankLevelBig`, `l3` `vecPlayers`, `v6` `uiMapID`. Each player: `v0` role id, `b3` name, `b80` client IP (private: the bridge keeps only the count).
 - Message ids (server to client): `11201` create reply (only you in `l3`), `11203` and `20103` a player joined, `11213` room info changed, `11205` a player left (`b6.s1` = who left, `b6.s2` = room after), `11241` keepalive every 5 s `{v0 room id, v1 pvp type}`. Client asks: `11200` create, `11204` leave, `11206` invite.
 - `11733` is the public room list (other rooms): not my room. `10208` stays undecoded (account data).
-- Event modes use other pvp types (seen: 3030). The card shows no mode name for unknown types.
+- Arcade modes use big pvp types: 3030 = Card Brawl (the room's map id is 3030 too). The card shows "Arcade" for other pvp types of 1000 or more.
 - Limit: a bridge started inside a room gets only keepalives (mode, no player list). It reuses the size saved in `.lobby_room.json`; if a friend joined while the bridge was off, it shows solo until the room changes. The room id stays the same when you change the mode.
 - Result: `mlbb_presence/lobby.py` runs its own `tcpdump "tcp src port 30101"` and the card shows "Ranked · In lobby" with the party badge. Checked live: "Brawl · In lobby".

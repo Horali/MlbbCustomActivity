@@ -53,7 +53,9 @@ PVP_LABELS = {
     21: "Ranked",
     22: "VS AI",
     23: "VS AI",
+    3030: "Card Brawl",  # arcade mode, seen 2026-11-28
 }
+ARCADE_MIN_PVP = 1000  # arcade/event modes use big pvp types
 CUSTOM_PVP = 6
 
 
@@ -65,7 +67,9 @@ class LobbyInfo:
 
     @property
     def mode(self) -> str:
-        return PVP_LABELS.get(self.pvp_type, "")
+        if self.pvp_type in PVP_LABELS:
+            return PVP_LABELS[self.pvp_type]
+        return "Arcade" if self.pvp_type >= ARCADE_MIN_PVP else ""
 
     @property
     def is_custom(self) -> bool:

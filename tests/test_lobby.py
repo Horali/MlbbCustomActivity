@@ -201,3 +201,9 @@ def test_restart_inside_room_reuses_saved_party_size(tmp_path):
     assert t2.self_uid == ME
     feed(t2, 11241, [(0, ROOM + 5), (1, 2)], 12)  # another room: no saved size
     assert t2.current(13).party_size == 1
+
+
+def test_arcade_mode_labels():
+    assert LobbyInfo(ROOM, 3030, 2).mode == "Card Brawl"
+    assert LobbyInfo(ROOM, 4123, 1).mode == "Arcade"
+    assert LobbyInfo(ROOM, 99, 1).mode == ""

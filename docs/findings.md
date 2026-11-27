@@ -22,3 +22,14 @@ Write yes / no and one line of notes for each test. See PLAN.md §8 Phase 0.
 | Live share link | | paste here |
 | Live link opens the live room (`adb shell am start -a android.intent.action.VIEW -d "<link>"`) | | |
 | Chat viewer shows mode + party (Ranked, Classic, Brawl) | | |
+
+## Live link research (2026-11-28, from the game files)
+- Source: `files/dragon2017/assets/android/lua/logic.unity3d` (Lua 5.1 bytecode, strings readable).
+- App link hosts: `https://applink.mobilelegends.com/`, `applink.legend5v5.com`, `applink.moba5v5.com`, `https://play.mobilelegends.com/landing`. Routes seen: `/whatsapp`, `/TwitchOAuth/`. No `/live` or room route.
+- An in-app live room is joined by `roomUserId` (streamer uid) + `serverId`: `CmdId_Live_JoinLiveRoom_CS m_RoomUserId=%s m_ServerId=%s`.
+- Share links come from a server short-link service (`{"code":0,"data":{"short_url":...}}`, `GetShareDeepLink`, `ConvertLongShareUrlToShortShareUrl`). The live share template is not in the scripts.
+- Team match room links do have a format: `?role_id=…&server_id=…&room_id=…&pvp_type=…` (`TouchTouchShare`). Not for Live.
+- Result: we cannot build the live link ourselves. Tap Share in a Live once and copy the short link, then test it (PLAN.md §6.2).
+
+## Profile from the phone
+- `shared_prefs/com.mobile.legends.v2.playerprefs.xml`: `OfflineRoleName` = IGN, `OfflineRoleLevel` = level (113 on 2026-11-28). Role id 30028189, zone 2041. The bridge reads these over root adb.

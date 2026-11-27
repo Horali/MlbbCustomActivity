@@ -1,6 +1,6 @@
 Status: active
 Needs user: MLBB Live share link (PLAN.md §6.2) and answers to PLAN.md §11
-Updated: 2026-11-28 04:40
+Updated: 2026-11-28 05:00
 Agent: Claude desktop app (Code tab), Opus 5.5, Phase 1 session
 
 ## Goal and why
@@ -23,10 +23,10 @@ Show a Discord Rich Presence card while the user plays MLBB on the phone (SM-S93
 5. Phase 2 (PLAN.md §8): "I am live" switch, tray menu.
 
 ## Open problems
-- Live room share link format: unknown.
+- Live room share link: a server short link, not in the scripts (see docs/findings.md). Needs one Share tap in a Live.
 - Lobby party size before draft: needs TCP 30101 research.
 - No match-end event in FixLag: the bridge uses a 20 s silence timeout after Battle.
-- Level is not decoded anywhere. Placeholder 86 in `.env`.
+- Level: read from the game prefs (`OfflineRoleLevel`, 113). Needs root; else `.env`.
 
 ## Decisions and lessons (keep)
 - Option A (PC bridge, Python, reuse FixLag) first; Option B (Android app) later.

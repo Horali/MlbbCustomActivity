@@ -4,13 +4,13 @@
 A Discord Rich Presence card for MLBB played on the phone: game, timer, mode, party size badge (Solo…5Q), and a "Watch my stream" button that opens MLBB on the viewer's phone.
 
 ## Current state
-- Plan only, no code. Read [PLAN.md](PLAN.md) first.
-- Recommended first build: Option A, a Python PC bridge that reads the FixLag chat viewer SSE stream plus `adb shell ps`, and sends presence to Discord desktop over IPC.
-- Mode and party size are known from draft pick (FixLag decodes them). Lobby party size needs research (TCP 30101).
-- The live room link format is unknown. Phase 0 tests it (PLAN.md §6.2).
+- Phase 0 done: the Discord app exists and `tools/phase0_presence.py` shows a test card (IGN, level, hero, game party badge, official icon).
+- Phase 1 in progress: `mlbb_presence/` bridge. It reads `adb shell ps` and the FixLag chat viewer SSE `/events`, and sends presence over Discord IPC.
+- Mode, hero and party size are known from draft pick. Level is not decoded (fixed in `.env`).
+- The live room link format is unknown (PLAN.md §6.2).
 
 ## Active tasks
-- [handoffs/discord-presence.md](handoffs/discord-presence.md) — waiting for answers to PLAN.md §11, then Phase 0.
+- [handoffs/discord-presence.md](handoffs/discord-presence.md) — Phase 1 bridge built; needs a live test evening and the Live share link.
 
 ## Where to look
 - Plan: [PLAN.md](PLAN.md)

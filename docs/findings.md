@@ -2,10 +2,8 @@
 
 Write yes / no and one line of notes for each test. See PLAN.md §8 Phase 0.
 
-## You do these steps
-1. Open https://discord.com/developers/applications. Make a new app named "Mobile Legends: Bang Bang".
-2. Copy the Application ID. Copy `.env.example` to `.env`. Paste the ID.
-3. Upload two test images in Rich Presence → Art Assets: key `mlbb` and key `party_3`.
+## Steps
+1-3. Done: the app "Mobile Legends Bang Bang" exists, the ID is in `.env`, assets are uploaded.
 4. Open Discord desktop. Run `pip install pypresence`, then `python tools/phase0_presence.py`.
 5. Look at your profile from a second account (PC and phone).
 6. Stop the script. Run `python tools/phase0_presence.py --scheme`.
@@ -14,9 +12,9 @@ Write yes / no and one line of notes for each test. See PLAN.md §8 Phase 0.
 ## Results
 | Test | Result | Notes |
 |---|---|---|
-| Card shows "Playing Mobile Legends: Bang Bang" | | |
-| Details, state, "(3 of 5)" and timer show | | |
-| Badge shows with hover text | | |
+| Card shows "Playing Mobile Legends Bang Bang" | yes | Discord rejects ":" in app names (2026-11-27) |
+| Details, state, "(3 of 5)" and timer show | yes | "naradira · Lv. 86" / "Fanny · Ranked · Draft pick" |
+| Badge shows with hover text | yes | `squadog_3` (game party icon), large `mlbb_logo` |
 | Buttons show on PC (second account) | | |
 | Buttons show on Discord mobile | | |
 | `https://applink.mobilelegends.com/` button opens MLBB on Android | | |

@@ -33,3 +33,4 @@ Write yes / no and one line of notes for each test. See PLAN.md §8 Phase 0.
 
 ## Profile from the phone
 - `shared_prefs/com.mobile.legends.v2.playerprefs.xml`: `OfflineRoleName` = IGN, `OfflineRoleLevel` = level (113 on 2026-11-28). Role id 30028189, zone 2041. The bridge reads these over root adb.
+- 2026-11-28 screenshot: the in-game Live is "My Channel" (Live Stream On/Off, Fans, Popularity, chat). It has no Share button. Viewers find the channel inside MLBB (Live list, profile, friends). So a Discord button can open MLBB, but not this exact channel.

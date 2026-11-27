@@ -8,7 +8,7 @@ Show a Discord Rich Presence card while the user plays MLBB on the phone (SM-S93
 
 ## Current state
 - Phase 0 done. Discord app "Mobile Legends Bang Bang" (ID in `.env`). `tools/phase0_presence.py` sends a fixed card. The user saw it on their profile.
-- Assets: large `mlbb_logo` (official Miya icon), badges `squadog_1..5` (built from the game's party icons). Game art is local only (`.gitignore`).
+- App icon (Developer Portal) set to the official logo on 2026-11-28; it shows in voice channel lists. Assets: large `mlbb_logo` (official Miya icon), badges `squadog_1..5` (built from the game's party icons). Game art is local only (`.gitignore`).
 - Phase 1 bridge built and pushed: `mlbb_presence/` (19 tests pass). Not yet run against a live match with Discord.
 - Checked on a FixLag pcap replay (`draft_LIVE6.pcap`): the feed gives IGN `naradira`, Ranked, 5-stack, hero Nolan.
 - Dry run on the phone (wireless, 2 adb entries): auto serial pick works; MLBB closed -> `CLOSED`.

@@ -1,6 +1,6 @@
 Status: active
 Needs user: MLBB Live share link (PLAN.md §6.2) and answers to PLAN.md §11
-Updated: 2026-11-28 04:10
+Updated: 2026-11-28 04:40
 Agent: Claude desktop app (Code tab), Opus 5.5, Phase 1 session
 
 ## Goal and why
@@ -9,14 +9,18 @@ Show a Discord Rich Presence card while the user plays MLBB on the phone (SM-S93
 ## Current state
 - Phase 0 done. Discord app "Mobile Legends Bang Bang" (ID in `.env`). `tools/phase0_presence.py` sends a fixed card. The user saw it on their profile.
 - Assets: large `mlbb_logo` (official Miya icon), badges `squadog_1..5` (built from the game's party icons). Game art is local only (`.gitignore`).
-- Phase 1 started: `mlbb_presence/` package (see Where to look).
-- FixLag `players[]` has `name`, `hero_name`, `party_size`, but no level. The bridge takes the IGN from `players[local_uid].name` when present, else `.env` IGN. Level stays from `.env`.
+- Phase 1 bridge built and pushed: `mlbb_presence/` (19 tests pass). Not yet run against a live match with Discord.
+- Checked on a FixLag pcap replay (`draft_LIVE6.pcap`): the feed gives IGN `naradira`, Ranked, 5-stack, hero Nolan.
+- Dry run on the phone (wireless, 2 adb entries): auto serial pick works; MLBB closed -> `CLOSED`.
+- FixLag `players[]` has `name`, `hero_name`, `party_size`, but no level. The IGN comes from `players[local_uid].name`, else `.env`. Level stays from `.env`.
+- Watch button: off unless `LIVE=1` and `WATCH_URL` is https.
 
 ## Next steps
-1. Run the bridge for one evening: start the FixLag chat viewer, then `python -m mlbb_presence`. Check mode, badge, hero and timer from a second account.
-2. Fill the open rows in `docs/findings.md` (buttons on mobile, scheme button, Competing).
-3. Ask the user for the MLBB Live share link to test the Watch button (PLAN.md §6.2).
-4. Phase 2 (PLAN.md §8): "I am live" switch, tray menu.
+1. Live test evening: in FixLag run `python -m tools.chat_viewer --adb <serial>`. Here run `python -m mlbb_presence` (`--dry-run -v` prints instead of sending). Check mode, badge, hero, timer from a second account.
+2. Tune `BATTLE_SILENCE` (20 s) in `state.py` if "Match ended" shows too early or late.
+3. Fill the open rows in `docs/findings.md` (buttons on mobile, scheme button, Competing).
+4. Ask the user for the MLBB Live share link to test the Watch button (PLAN.md §6.2).
+5. Phase 2 (PLAN.md §8): "I am live" switch, tray menu.
 
 ## Open problems
 - Live room share link format: unknown.

@@ -5,7 +5,7 @@ A Discord Rich Presence card for MLBB played on the phone: game, timer, mode, pa
 
 ## Current state
 - Phase 0 done: the Discord app exists and `tools/phase0_presence.py` shows a test card (IGN, level, hero, game party badge, official icon).
-- Phase 1 in progress: `mlbb_presence/` bridge. It reads `adb shell ps` and the FixLag chat viewer SSE `/events`, and sends presence over Discord IPC.
+- Phase 1 bridge built: `mlbb_presence/` (`python -m mlbb_presence`). It reads `adb shell ps` and the FixLag chat viewer SSE `/events`, and sends presence over Discord IPC.
 - Mode, hero and party size are known from draft pick. Level is not decoded (fixed in `.env`).
 - The live room link format is unknown (PLAN.md §6.2).
 

@@ -1,6 +1,6 @@
 """Mapper: GameState -> Discord presence fields. Pure function (PLAN.md §5.1).
 
-Card order (user rule): IGN and level first, then hero, mode and phase.
+Card order (user rule): details = level, IGN, hero; state = mode, phase, party.
 """
 from __future__ import annotations
 
@@ -48,13 +48,12 @@ def to_presence(s: GameState, cfg: Config) -> dict[str, Any] | None:
 
     ign = s.ign or cfg.ign
     level = f"Lv. {cfg.level}" if cfg.level else ""
-    details = " · ".join(x for x in (ign, level) if x) or GAME_NAME
-
     in_match = s.phase in (DRAFT, LOADING, BATTLE, AFTER)
     with_mode = in_match or s.phase == LOBBY  # the lobby room also knows mode and party
+    hero = s.hero if in_match else ""
+    details = " · ".join(x for x in (level, ign, hero) if x) or GAME_NAME
+
     parts = []
-    if in_match and s.hero:
-        parts.append(s.hero)
     if with_mode and s.mode:
         parts.append(s.mode)
     phase_text = PHASE_TEXT.get(s.phase, "")

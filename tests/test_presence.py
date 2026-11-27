@@ -19,7 +19,7 @@ def test_closed_clears_presence():
 
 def test_lobby_puts_name_and_level_first():
     p = to_presence(GameState(S.LOBBY, session_start=1000.0), CFG)
-    assert p["details"] == "naradira · Lv. 86"
+    assert p["details"] == "Lv. 86 · naradira"
     assert p["state"] == "In lobby"
     assert p["start"] == 1000
     assert p["large_image"] == "mlbb_icon"
@@ -30,7 +30,8 @@ def test_battle_shows_hero_mode_badge():
     s = GameState(S.BATTLE, session_start=1000.0, match_start=2000.0, mode="Ranked",
                   party_size=3, hero="Fanny", ign="naradira")
     p = to_presence(s, CFG)
-    assert p["state"] == "Fanny · Ranked · In match"
+    assert p["details"] == "Lv. 86 · naradira · Fanny"
+    assert p["state"] == "Ranked · In match"
     assert p["party_size"] == [3, 5]
     assert p["small_image"] == "squadog_3"
     assert p["small_text"] == "Trio queue (3 of 5)"
@@ -46,7 +47,7 @@ def test_match_timer_option():
 
 def test_ign_from_game_wins_over_env():
     p = to_presence(GameState(S.DRAFT, ign="RealName"), CFG)
-    assert p["details"] == "RealName · Lv. 86"
+    assert p["details"] == "Lv. 86 · RealName"
 
 
 def test_custom_room_has_no_badge():

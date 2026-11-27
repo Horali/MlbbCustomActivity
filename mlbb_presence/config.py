@@ -31,6 +31,7 @@ class Config:
     level: str = ""
     large_image: str = "mlbb_icon"
     badge_prefix: str = "squadog_"
+    badge_icon: bool = True  # small party icon on the card; .env BADGE_ICON (off by default)
     watch_url: str = ""
     live: bool = False
     match_timer: bool = False
@@ -48,6 +49,7 @@ class Config:
             level=env("LEVEL", ""),
             large_image=env("LARGE_IMAGE", "mlbb_icon"),
             badge_prefix=env("BADGE_PREFIX", "squadog_"),
+            badge_icon=_flag("BADGE_ICON"),
             watch_url=env("WATCH_URL", ""),
             live=_flag("LIVE"),
             match_timer=_flag("MATCH_TIMER"),

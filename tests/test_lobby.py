@@ -180,3 +180,11 @@ def test_background_hides_lobby_room():
     bg = GameInfo(running=True, foreground=False, started_at=1000.0)
     s = StateMachine().update(bg, None, None, 2000.0, LobbyInfo(ROOM, 2, 2))
     assert s.phase == S.IDLE and s.mode == "" and s.party_size is None
+
+
+def test_badge_icon_switch_keeps_party_text():
+    from dataclasses import replace
+    s = StateMachine().update(ON, None, None, 2000.0, LobbyInfo(ROOM, 2, 1))
+    p = to_presence(s, replace(CFG, badge_icon=False))
+    assert p["party_size"] == [1, 5]
+    assert "small_image" not in p and "small_text" not in p

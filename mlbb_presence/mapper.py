@@ -72,8 +72,9 @@ def to_presence(s: GameState, cfg: Config) -> dict[str, Any] | None:
     size = s.party_size
     if with_mode and not s.is_custom and size in BADGE_TEXT:
         out["party_size"] = [size, 5]
-        out["small_image"] = f"{cfg.badge_prefix}{size}"
-        out["small_text"] = BADGE_TEXT[size]
+        if cfg.badge_icon:
+            out["small_image"] = f"{cfg.badge_prefix}{size}"
+            out["small_text"] = BADGE_TEXT[size]
 
     if cfg.live and cfg.watch_url.startswith("https://"):
         out["buttons"] = [{"label": "Watch my stream", "url": cfg.watch_url}]

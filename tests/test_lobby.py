@@ -97,7 +97,7 @@ def test_keepalive_of_new_room_drops_old_party_size():
     t = LobbyTracker()
     feed(t, 11203, [(2, room(2, [ME, FRIEND]))], 0)
     feed(t, 11241, [(0, ROOM + 1), (1, 1)], 1)
-    assert t.current(2) == LobbyInfo(ROOM + 1, 1, None)
+    assert t.current(2) == LobbyInfo(ROOM + 1, 1, 1)  # unknown count shows solo
 
 
 def test_room_list_is_not_my_room():

@@ -213,7 +213,8 @@ class LobbyTracker:
             if self.seen_at is None or now - self.seen_at > ROOM_STALE_SECONDS:
                 return None
             assert self.room_id is not None and self.pvp_type is not None
-            return LobbyInfo(self.room_id, self.pvp_type, self.party_size)
+            # Unknown count (bridge started inside a room): show solo until the room changes.
+            return LobbyInfo(self.room_id, self.pvp_type, self.party_size or 1)
 
 
 # ---------------------------------------------------------------- pcap + tcp

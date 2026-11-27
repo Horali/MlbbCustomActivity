@@ -11,6 +11,7 @@ Wire format (server -> client):
 """
 from __future__ import annotations
 
+import json
 import logging
 import shutil
 import struct
@@ -18,6 +19,7 @@ import subprocess
 import threading
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable, Iterable
 
 log = logging.getLogger(__name__)
@@ -169,13 +171,23 @@ def _is_room(d: Any) -> bool:
 class LobbyTracker:
     """Keeps the room you are in. Feed it decoded messages; read `current(now)`."""
 
-    def __init__(self) -> None:
+    def __init__(self, memory: Path | None = None) -> None:
         self._lock = threading.Lock()
         self.room_id: int | None = None
         self.pvp_type: int | None = None
         self.party_size: int | None = None
         self.self_uid: int | None = None
         self.seen_at: float | None = None
+        # Last room and its size, kept on disk: a restarted bridge inside the same room
+        # gets only keepalives (no player list), so it reuses the saved size.
+        self.memory = memory
+        self._saved: dict[str, int] = {}
+        if memory is not None:
+            try:
+                self._saved = {k: int(v) for k, v in json.loads(memory.read_text()).items()}
+            except (OSError, ValueError, AttributeError):
+                self._saved = {}
+            self.self_uid = self._saved.get("self_uid")
 
     def on_message(self, mid: int, body: dict[tuple[str, int], Any], now: float) -> None:
         with self._lock:
@@ -183,7 +195,10 @@ class LobbyTracker:
                 if not _is_room(body):
                     return
                 if body[("v", 0)] != self.room_id:
-                    self.room_id, self.party_size = body[("v", 0)], None
+                    self.room_id = body[("v", 0)]
+                    saved = self._saved.get("party_size") if self._saved.get("room_id") == self.room_id else None
+                    self.party_size = saved
+                    log.info("lobby room %s, party %s (saved)", self.room_id, saved)
                 self.pvp_type = body[("v", 1)]
                 self.seen_at = now
                 return
@@ -204,9 +219,23 @@ class LobbyTracker:
             self.pvp_type = room[("v", 1)]
             self.party_size = len(uids) or None
             self.seen_at = now
+            log.info("lobby room %s pvp %s party %s (mid %s)", self.room_id, self.pvp_type,
+                     self.party_size, mid)
+            self._save()
+
+    def _save(self) -> None:
+        self._saved = {k: v for k, v in (("room_id", self.room_id), ("party_size", self.party_size),
+                                         ("self_uid", self.self_uid)) if v is not None}
+        if self.memory is not None:
+            try:
+                self.memory.write_text(json.dumps(self._saved))
+            except OSError:
+                pass
 
     def _clear(self) -> None:
         self.room_id = self.pvp_type = self.party_size = self.seen_at = None
+        log.info("left the lobby room")
+        self._save()
 
     def current(self, now: float) -> LobbyInfo | None:
         with self._lock:

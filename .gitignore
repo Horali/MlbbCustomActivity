@@ -8,6 +8,7 @@ captures/
 data/
 *.pcap
 *.log
+.lobby_room.json
 
 # Python
 __pycache__/

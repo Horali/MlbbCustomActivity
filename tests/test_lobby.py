@@ -188,3 +188,16 @@ def test_badge_icon_switch_keeps_party_text():
     p = to_presence(s, replace(CFG, badge_icon=False))
     assert p["party_size"] == [1, 5]
     assert "small_image" not in p and "small_text" not in p
+
+
+def test_restart_inside_room_reuses_saved_party_size(tmp_path):
+    mem = tmp_path / "room.json"
+    t = LobbyTracker(memory=mem)
+    feed(t, 11201, [(1, room(2, [ME]))], 0)
+    feed(t, 11203, [(2, room(2, [ME, FRIEND]))], 1)
+    t2 = LobbyTracker(memory=mem)  # bridge restarted; only keepalives arrive now
+    feed(t2, 11241, [(0, ROOM), (1, 2)], 10)
+    assert t2.current(11) == LobbyInfo(ROOM, 2, 2)
+    assert t2.self_uid == ME
+    feed(t2, 11241, [(0, ROOM + 5), (1, 2)], 12)  # another room: no saved size
+    assert t2.current(13).party_size == 1

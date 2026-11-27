@@ -14,7 +14,7 @@ import threading
 import time
 from dataclasses import replace
 
-from .config import Config
+from .config import ROOT, Config
 from .game import GameWatcher
 from .lobby import LobbyTracker, run_capture
 from .mapper import to_presence
@@ -45,7 +45,7 @@ def main(argv: list[str] | None = None) -> int:
     threading.Thread(target=run_feed, args=(cfg.viewer_url, feed, stop), daemon=True).start()
 
     game = GameWatcher(cfg.adb, cfg.adb_serial)
-    lobby = LobbyTracker()
+    lobby = LobbyTracker(memory=ROOT / ".lobby_room.json")
     if not args.no_lobby:
         threading.Thread(target=run_capture, args=(cfg.adb, lambda: game.serial, lobby, stop),
                          daemon=True).start()

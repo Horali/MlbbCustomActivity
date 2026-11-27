@@ -59,6 +59,12 @@ ARCADE_MIN_PVP = 1000  # arcade/event modes use big pvp types
 CUSTOM_PVP = 6
 
 
+def mode_label(pvp_type: int) -> str:
+    if pvp_type in PVP_LABELS:
+        return PVP_LABELS[pvp_type]
+    return "Arcade" if pvp_type >= ARCADE_MIN_PVP else ""
+
+
 @dataclass(frozen=True)
 class LobbyInfo:
     room_id: int
@@ -67,9 +73,7 @@ class LobbyInfo:
 
     @property
     def mode(self) -> str:
-        if self.pvp_type in PVP_LABELS:
-            return PVP_LABELS[self.pvp_type]
-        return "Arcade" if self.pvp_type >= ARCADE_MIN_PVP else ""
+        return mode_label(self.pvp_type)
 
     @property
     def is_custom(self) -> bool:

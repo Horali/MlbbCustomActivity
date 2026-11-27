@@ -225,3 +225,9 @@ def test_draft_text_only_for_draft_modes():
     assert p["state"] == "Card Brawl · Hero selection"
     p = to_presence(GameState(S.DRAFT, mode="Ranked", party_size=2), CFG)
     assert p["state"] == "Ranked · Draft pick"
+
+
+def test_fixlag_mode_number_gets_a_name():
+    from mlbb_presence.match import MatchInfo
+    s = StateMachine().update(ON, MatchInfo("y", S.BATTLE, mode="Mode 3030", hero="Layla"), 1.0, 2000.0)
+    assert s.mode == "Card Brawl"

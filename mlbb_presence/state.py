@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .game import GameInfo
-from .lobby import LobbyInfo
+from .lobby import LobbyInfo, mode_label
 from .match import MatchInfo
 
 # Phases
@@ -117,6 +117,8 @@ class StateMachine:
         mode = m.mode if m else ""
         party = m.party_size if m else None
         is_custom = m.is_custom if m else False
+        if mode.startswith("Mode ") and mode[5:].isdigit():
+            mode = mode_label(int(mode[5:])) or mode  # FixLag's "Mode 3030" -> "Card Brawl"
         prev = self.last_room
         if m is not None and prev is not None and (not mode or mode.startswith("Mode ")):
             # FixLag does not know arcade modes (e.g. Card Brawl): use the lobby room.

@@ -36,3 +36,13 @@ Write yes / no and one line of notes for each test. See PLAN.md §8 Phase 0.
 - 2026-11-28 screenshot: the in-game Live is "My Channel" (Live Stream On/Off, Fans, Popularity, chat). It has no Share button. Viewers find the channel inside MLBB (Live list, profile, friends). So a Discord button can open MLBB, but not this exact channel.
 - 2026-11-28 second script search: no app link opens a live room or a profile. Live join and profile open use internal server commands only (`Cmd_Live_JoinLiveRoom_CS` ulUid+uiZoneId, `Cmd_Role_GetBaseInfo_CS`). Team invites (`mobilelegends://appinvites/hago/TeamMatch/<payload>`) use an encrypted payload made in C#. Discord "Ask to Join" also cannot work, because MLBB on the viewer's phone does not talk to Discord. Decision left: Watch button = open MLBB + show the game ID, or no button.
 - 2026-11-28 viewer side (another streamer's channel): the channel page has Follow and Watch, no Share. The watch screen has exit, full screen, shop, heart, gift, ranking, VIP and a chat toggle, no Share. Viewers reach a channel only inside MLBB.
+
+## Lobby room messages (TCP 30101), 2026-11-28
+- Source: a passive capture (`tcpdump "tcp port 30101"`) while the user opened Classic, Ranked and Brawl rooms and two friends joined and left. Names of the room messages come from `FixLag/data/01_dump.cs` (`CmdId_Room_*`, `MTTDProto.RoomInfo`); the numbers come from the capture.
+- Frames: flag `0x00` raw or `0x10` Zstd, then a 3-byte big-endian total length. Body: struct `{v0 mid, v2 result, b6 body}` (server to client).
+- `RoomInfo` tags = declaration order minus 1: `v0` room id, `v1` `uiPVPType` (1 Classic, 2 Ranked, 4 Brawl, 6 Custom), `v2` `uiRankLevelBig`, `l3` `vecPlayers`, `v6` `uiMapID`. Each player: `v0` role id, `b3` name, `b80` client IP (private: the bridge keeps only the count).
+- Message ids (server to client): `11201` create reply (only you in `l3`), `11203` and `20103` a player joined, `11213` room info changed, `11205` a player left (`b6.s1` = who left, `b6.s2` = room after), `11241` keepalive every 5 s `{v0 room id, v1 pvp type}`. Client asks: `11200` create, `11204` leave, `11206` invite.
+- `11733` is the public room list (other rooms): not my room. `10208` stays undecoded (account data).
+- Event modes use other pvp types (seen: 3030). The card shows no mode name for unknown types.
+- Limit: if the bridge starts while you already sit in a room, it knows the mode (keepalive) but not the party size until the room changes.
+- Result: `mlbb_presence/lobby.py` runs its own `tcpdump "tcp src port 30101"` and the card shows "Ranked · In lobby" with the party badge. Checked live: "Brawl · In lobby".

@@ -33,7 +33,7 @@ def test_battle_shows_hero_mode_badge():
     assert p["details"] == "Lv. 86 · naradira · Fanny"
     assert p["state"] == "Ranked · In match (3 of 5)"
     assert "party_size" not in p and p["state"].endswith("(3 of 5)")
-    assert p["small_image"] == "squadog_3"
+    assert p["small_image"] == "party_3"
     assert p["small_text"] == "Trio queue (3 of 5)"
     assert p["large_text"] == "Playing as Fanny"
     assert p["start"] == 1000  # session timer by default

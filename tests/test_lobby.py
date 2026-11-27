@@ -160,7 +160,7 @@ def test_lobby_room_shows_mode_and_party_badge():
     p = to_presence(s, CFG)
     assert p["state"] == "Ranked · In lobby (2 of 5)"
     assert "party_size" not in p and p["state"].endswith("(2 of 5)")
-    assert p["small_image"] == "squadog_2"
+    assert p["small_image"] == "party_2"
     assert p["small_text"] == "Duo queue (2 of 5)"
 
 

@@ -30,8 +30,8 @@ class Config:
     ign: str = ""
     level: str = ""
     large_image: str = "mlbb_icon"
-    badge_prefix: str = "squadog_"
-    badge_icon: bool = True  # small party icon on the card; .env BADGE_ICON (off by default)
+    badge_prefix: str = "party_"
+    badge_icon: bool = True  # small party icon on the card; .env BADGE_ICON=0 hides it
     watch_url: str = ""
     live: bool = False
     match_timer: bool = False
@@ -48,8 +48,8 @@ class Config:
             ign=env("IGN", ""),
             level=env("LEVEL", ""),
             large_image=env("LARGE_IMAGE", "mlbb_icon"),
-            badge_prefix=env("BADGE_PREFIX", "squadog_"),
-            badge_icon=_flag("BADGE_ICON"),
+            badge_prefix=env("BADGE_PREFIX", "party_"),
+            badge_icon=_flag("BADGE_ICON", True),
             watch_url=env("WATCH_URL", ""),
             live=_flag("LIVE"),
             match_timer=_flag("MATCH_TIMER"),

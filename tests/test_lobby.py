@@ -231,3 +231,16 @@ def test_fixlag_mode_number_gets_a_name():
     from mlbb_presence.match import MatchInfo
     s = StateMachine().update(ON, MatchInfo("y", S.BATTLE, mode="Mode 3030", hero="Layla"), 1.0, 2000.0)
     assert s.mode == "Card Brawl"
+
+
+def test_services_follow_the_game():
+    from mlbb_presence.services import Services
+    sv = Services("adb", LobbyTracker(), lobby=False)
+    sv.update(True, "")            # no device yet: wait
+    assert not sv.running
+    sv.update(True, "dev:1")
+    assert sv.running
+    sv.update(None, "dev:1")       # phone not reachable: keep going
+    assert sv.running
+    sv.update(False, "dev:1")      # game closed
+    assert not sv.running

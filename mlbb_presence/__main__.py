@@ -16,7 +16,8 @@ from dataclasses import replace
 
 from .config import ROOT, Config
 from .game import GameWatcher
-from .lobby import LobbyTracker, run_capture
+from .lobby import LobbyTracker
+from .services import Services
 from .mapper import to_presence
 from .match import MatchFeed, run_feed
 from .sender import Sender
@@ -46,9 +47,8 @@ def main(argv: list[str] | None = None) -> int:
 
     game = GameWatcher(cfg.adb, cfg.adb_serial)
     lobby = LobbyTracker(memory=ROOT / ".lobby_room.json")
-    if not args.no_lobby:
-        threading.Thread(target=run_capture, args=(cfg.adb, lambda: game.serial, lobby, stop),
-                         daemon=True).start()
+    services = Services(cfg.adb, lobby, lobby=not args.no_lobby,
+                        fixlag_dir=cfg.fixlag_dir, viewer_url=cfg.viewer_url)
     machine = StateMachine()
     sender = None if args.dry_run else Sender(cfg.app_id)
     last_printed: object = ()
@@ -63,7 +63,9 @@ def main(argv: list[str] | None = None) -> int:
                     logging.info("profile from phone: %s, level %s", cfg.ign, cfg.level)
                 profile_at = now
             match, age = feed.current(now)
-            state = machine.update(game.poll(), match, age, now, lobby.current(now))
+            info = game.poll()
+            services.update(None if info is None else info.running, game.serial)
+            state = machine.update(info, match, age, now, lobby.current(now))
             payload = to_presence(state, cfg)
             if sender is not None:
                 sender.push(payload, now)
@@ -75,6 +77,8 @@ def main(argv: list[str] | None = None) -> int:
         pass
     finally:
         stop.set()
+        if services.running:
+            services.stop()
         if sender is not None:
             sender.push(None, float("inf"))
             sender.close()

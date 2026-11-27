@@ -38,6 +38,7 @@ class Config:
     adb: str = str(DEFAULT_ADB)
     adb_serial: str = ""
     viewer_url: str = "http://127.0.0.1:8765/events"
+    fixlag_dir: str = ""  # set: the bridge starts the FixLag chat viewer while MLBB runs
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -56,4 +57,5 @@ class Config:
             adb=env("ADB", str(DEFAULT_ADB)),
             adb_serial=env("ADB_SERIAL", ""),
             viewer_url=env("VIEWER_URL", "http://127.0.0.1:8765/events"),
+            fixlag_dir=env("FIXLAG_DIR", ""),
         )

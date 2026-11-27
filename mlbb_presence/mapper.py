@@ -26,6 +26,10 @@ BADGE_TEXT = {
     5: "Full 5-queue (5 of 5)",
 }
 
+# Only these modes have a ban/pick draft; the others pick heroes freely.
+DRAFT_MODES = {"Ranked", "Draft Pick", "MCL", "Custom Draft"}
+HERO_SELECT_TEXT = "Hero selection"
+
 GAME_NAME = "Mobile Legends: Bang Bang"
 
 
@@ -53,7 +57,10 @@ def to_presence(s: GameState, cfg: Config) -> dict[str, Any] | None:
         parts.append(s.hero)
     if with_mode and s.mode:
         parts.append(s.mode)
-    parts.append(PHASE_TEXT.get(s.phase, ""))
+    phase_text = PHASE_TEXT.get(s.phase, "")
+    if s.phase == DRAFT and s.mode not in DRAFT_MODES:
+        phase_text = HERO_SELECT_TEXT
+    parts.append(phase_text)
     state = " · ".join(p for p in parts if p)
 
     out: dict[str, Any] = {

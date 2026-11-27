@@ -217,3 +217,11 @@ def test_draft_without_mode_uses_lobby_room():
     assert s.phase == S.DRAFT and s.mode == "Card Brawl" and s.party_size == 3
     s = m.update(ON, MatchInfo("x", S.DRAFT, mode="Ranked", party_size=2), 1.0, 2011.0, None)
     assert s.mode == "Ranked" and s.party_size == 2  # FixLag wins when it knows the mode
+
+
+def test_draft_text_only_for_draft_modes():
+    from mlbb_presence.state import GameState
+    p = to_presence(GameState(S.DRAFT, mode="Card Brawl", party_size=3), CFG)
+    assert p["state"] == "Card Brawl · Hero selection"
+    p = to_presence(GameState(S.DRAFT, mode="Ranked", party_size=2), CFG)
+    assert p["state"] == "Ranked · Draft pick"

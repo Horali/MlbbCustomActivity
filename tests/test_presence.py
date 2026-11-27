@@ -164,10 +164,19 @@ def test_debouncer_limits_rate_and_skips_repeats():
     d = Debouncer(15)
     assert d.due({"x": 1}, 0)
     d.mark({"x": 1}, 0)
-    assert not d.due({"x": 1}, 100)
+    assert not d.due({"x": 1}, 50)
     assert not d.due({"x": 2}, 10)
     assert d.due({"x": 2}, 15)
     assert d.due(None, 15)
+
+
+def test_debouncer_resends_same_card_after_refresh():
+    d = Debouncer(15, refresh=60)
+    d.mark({"x": 1}, 0)
+    assert not d.due({"x": 1}, 59)
+    assert d.due({"x": 1}, 60)
+    d.mark(None, 0)
+    assert not d.due(None, 600)
 
 
 def test_pick_device_prefers_usb():

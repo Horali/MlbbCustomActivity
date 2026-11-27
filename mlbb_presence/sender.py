@@ -7,20 +7,23 @@ from typing import Any
 log = logging.getLogger(__name__)
 
 MIN_INTERVAL = 15.0
+REFRESH = 60.0
 _UNSET = object()
 
 
 class Debouncer:
     """Decides when a new payload may go out. Pure: the caller gives the clock."""
 
-    def __init__(self, min_interval: float = MIN_INTERVAL) -> None:
+    def __init__(self, min_interval: float = MIN_INTERVAL, refresh: float = REFRESH) -> None:
         self.min_interval = min_interval
+        self.refresh = refresh
         self.sent: Any = _UNSET
         self.sent_at: float | None = None
 
     def due(self, payload: Any, now: float) -> bool:
         if payload == self.sent:
-            return False
+            # Re-send the same card now and then: a Discord reload drops it silently.
+            return payload is not None and now - self.sent_at >= self.refresh
         if self.sent_at is None or self.sent is _UNSET:
             return True
         return now - self.sent_at >= self.min_interval

@@ -201,7 +201,7 @@ See §3.4. Do not do it.
 
 ### 5.2 Badges
 
-Five round badges, 1024 × 1024 PNG, uploaded as assets `party_1` … `party_5`:
+Five round badges, 1024 × 1024 PNG, uploaded as assets `queue_1` … `queue_5` (person icons: 1 to 5 people):
 
 | Size | Label | Idea for the art | Hover text |
 |---|---|---|---|

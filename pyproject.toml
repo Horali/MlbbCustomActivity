@@ -1,0 +1,16 @@
+[project]
+name = "mlbb-presence"
+version = "0.1.0"
+description = "Discord Rich Presence bridge for MLBB played on an Android phone"
+requires-python = ">=3.10"
+dependencies = ["pypresence>=4.3"]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[tool.setuptools]
+packages = ["mlbb_presence"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -61,6 +61,12 @@ def to_presence(s: GameState, cfg: Config) -> dict[str, Any] | None:
         phase_text = HERO_SELECT_TEXT
     parts.append(phase_text)
     state = " · ".join(p for p in parts if p)
+    size = s.party_size
+    show_party = with_mode and not s.is_custom and size in BADGE_TEXT
+    if show_party:
+        # Our own "(n of 5)" text, not Discord's party_size: with party_size Discord puts
+        # the timer on the same line as the state, which the user found crowded.
+        state += f" ({size} of 5)"
 
     out: dict[str, Any] = {
         "details": _clip(details),
@@ -75,9 +81,7 @@ def to_presence(s: GameState, cfg: Config) -> dict[str, Any] | None:
     if start:
         out["start"] = int(start)
 
-    size = s.party_size
-    if with_mode and not s.is_custom and size in BADGE_TEXT:
-        out["party_size"] = [size, 5]
+    if show_party:
         if cfg.badge_icon:
             out["small_image"] = f"{cfg.badge_prefix}{size}"
             out["small_text"] = BADGE_TEXT[size]

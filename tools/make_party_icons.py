@@ -1,6 +1,6 @@
 """Draw the party badge icons party_1..party_5 (1024 px PNG) and a preview sheet.
 
-Flat white people on a dark circle, like Discord's own party icon.
+Flat dark people on a transparent background, like Discord's own party icon.
 Usage: python tools/make_party_icons.py [out_dir]   (default: assets/)
 """
 from __future__ import annotations
@@ -8,13 +8,11 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 SIZE = 1024
 SS = 4  # supersampling for smooth edges
-BG = (30, 31, 34, 255)        # Discord dark
-RING = (255, 255, 255, 40)
-FG = (255, 255, 255, 255)
+FG = (30, 31, 34, 255)  # near black, like Discord's party icon
 
 # (x, y, scale) per person, back row first. x, y = centre of the head, 0..1.
 LAYOUTS = {
@@ -40,20 +38,19 @@ def person(d: ImageDraw.ImageDraw, cx: float, cy: float, k: float, fill, grow: f
 
 
 def icon(n: int) -> Image.Image:
+    """Dark people on a transparent background, with a soft light glow so they
+    stay readable on dark art."""
     s = SIZE * SS
-    img = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    d.ellipse([0, 0, s - 1, s - 1], fill=BG)
     people = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     pd = ImageDraw.Draw(people)
     gap = 0.022 * s
     for cx, cy, k in LAYOUTS[n]:
-        person(pd, cx, cy, k, BG, grow=gap)  # dark outline separates overlapping people
+        person(pd, cx, cy, k, (0, 0, 0, 0), grow=gap)  # cut a clear gap around each person
         person(pd, cx, cy, k, FG)
-    mask = Image.new("L", (s, s), 0)
-    ImageDraw.Draw(mask).ellipse([int(0.06 * s), int(0.06 * s), int(0.94 * s), int(0.94 * s)], fill=255)
-    img.paste(people, (0, 0), Image.composite(people, Image.new("RGBA", (s, s)), mask).split()[3])
-    d.ellipse([0, 0, s - 1, s - 1], outline=RING, width=int(0.012 * s))
+    alpha = people.split()[3]
+    shadow = Image.new("RGBA", (s, s), (255, 255, 255, 0))
+    shadow.putalpha(alpha.filter(ImageFilter.GaussianBlur(0.02 * s)).point(lambda a: int(a * 0.55)))
+    img = Image.alpha_composite(shadow, people)
     return img.resize((SIZE, SIZE), Image.LANCZOS)
 
 

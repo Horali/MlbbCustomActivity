@@ -1,6 +1,6 @@
 Status: active
 Needs user: restart the bridge, then check the card in a Ranked room with a friend
-Updated: 2026-11-28 05:05
+Updated: 2026-11-28 05:00
 Agent: Claude desktop app (Code tab), Opus 5.5, lobby-state side session
 
 ## Goal and why
@@ -17,7 +17,7 @@ Show the lobby mode and party size on the Discord card before draft pick, e.g. "
 3. Then remove this task (move lessons to HANDOFF.md) and delete this file.
 
 ## Open problems
-- Bridge started while already in a room: mode known, party size unknown until someone joins or leaves.
+- Bridge started while already in a room: the card shows solo (1 of 5) until someone joins or leaves.
 - Joining a friend's room: the decoder learns your role id only from a room you create; it then relies on the 15 s keepalive silence to see that you left.
 
 ## Decisions and lessons (keep)

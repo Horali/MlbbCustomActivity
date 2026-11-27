@@ -34,15 +34,19 @@ def main() -> None:
     if "--scheme" in sys.argv:
         watch = "mobilelegends://"
 
+    level = os.environ.get("LEVEL", "")
+    lvl = f"Lv. {level}" if level else ""
+    hero = os.environ.get("HERO", "Fanny")
+
     rpc = Presence(app_id)
     rpc.connect()
     rpc.update(
-        details="Ranked · Draft pick",
-        state="Trio queue",
+        details=" · ".join(x for x in (os.environ.get("IGN", "naradira"), lvl) if x),
+        state=f"{hero} · Ranked · Draft pick",
         party_size=[3, 5],
         start=int(time.time()),
         large_image=os.environ.get("LARGE_IMAGE", "mlbb"),
-        large_text="Mobile Legends: Bang Bang",
+        large_text=f"Playing as {hero}",
         small_image=os.environ.get("SMALL_IMAGE", "squad_3"),
         small_text="Trio queue (3 of 5)",
         buttons=[

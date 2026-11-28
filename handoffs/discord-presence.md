@@ -1,6 +1,6 @@
 Status: active
-Needs user: phone on adb + MLBB open, then queue and cancel 3 times (queue signal research)
-Updated: 2026-11-28 21:10
+Needs user: check "In queue" / "Match found" on the card in the next play session
+Updated: 2026-11-28 21:52
 Agent: Claude desktop app (Code tab), Opus 5.5, Phase 1 session
 
 ## Goal and why
@@ -17,7 +17,7 @@ Show a Discord Rich Presence card while the user plays MLBB on the phone (SM-S93
 - Serial change (USB unplugged): `Services.update` moves the lobby capture and restarts the chat viewer on the new serial.
 - Lobby room: no keepalive (11241) while you queue, play, or after a match; the room id stays all session. The tracker keeps the room until leave (11205), game close, or 30 min; `.lobby_room.json` also saves pvp_type and seen_at.
 - Cancelled match (someone did not accept): 20103 on the lobby link after the draft started ends the draft (`LobbyInfo.back_at`). No 20103 was seen at a real draft start; watch for false ends.
-- No queue signal yet: queue shows as "In lobby". Research: run `python tools/record_lobby.py <serial> 900 rec.txt` while the user starts and cancels the queue 3 times and notes the times; look for a C>S id at each start and S>C ids at start/cancel. Class map names: `Cmd_Battle_StartMatch_CS`, `Cmd_Battle_Match_Matching_Echo_CS/SC` (numbers not in the dump).
+- Queue: 19010 `v8` 1 = in queue, 2/4 = off (cancel, ready check failed); 20423 = match found (ready check, ~30 s); 20135 = ready check failed; client sends 19001 start, 19005 cancel. Card phases QUEUE "In queue", FOUND "Match found" (45 s max). A 5Q member who is not the leader is untested. Draft and match use the room party size when FixLag has none. Recorder: `tools/record_lobby.py`.
 - Party count: our own "(n of 5)" state text, no Discord party_size, so the timer stays on the bottom line (user choice 2026-11-28 13:15; the people icon is lost).
 - Watch button: off unless `LIVE=1` and `WATCH_URL` is https.
 

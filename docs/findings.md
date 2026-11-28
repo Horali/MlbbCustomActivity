@@ -46,3 +46,4 @@ Write yes / no and one line of notes for each test. See PLAN.md §8 Phase 0.
 - Arcade modes use big pvp types: 3030 = Card Brawl (the room's map id is 3030 too). The card shows "Arcade" for other pvp types of 1000 or more.
 - Limit: a bridge started inside a room gets only keepalives (mode, no player list). It reuses the size saved in `.lobby_room.json`; if a friend joined while the bridge was off, it shows solo until the room changes. The room id stays the same when you change the mode.
 - Result: `mlbb_presence/lobby.py` runs its own `tcpdump "tcp src port 30101"` and the card shows "Ranked · In lobby" with the party badge. Checked live: "Brawl · In lobby".
+- Queue (2026-11-28): `19010` push `v8` 1 = in queue, 2 = off, 4 = ready check failed (with `v9` match id); `20423` match found (`v2` match id); `20008` battle server info; `20135` ready check failed; `20103` team back in the room. Client: `19001` start queue, `19005` cancel.

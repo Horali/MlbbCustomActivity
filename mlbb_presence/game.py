@@ -76,18 +76,21 @@ def parse_profile(text: str) -> tuple[str, str]:
     return found.get("Name", ""), found.get("Level", "")
 
 
-def pick_device(devices_output: str) -> str:
-    """First ready serial in `adb devices` output. USB serials win over wireless ones."""
+def pick_device(devices_output: str, model: str = "") -> str:
+    """First ready serial in `adb devices -l` output. USB serials win over wireless ones.
+    With `model` (for example SM_S936B), other phones on adb are skipped."""
     ready = [ln.split()[0] for ln in devices_output.splitlines()[1:]
-             if len(ln.split()) >= 2 and ln.split()[1] == "device"]
+             if len(ln.split()) >= 2 and ln.split()[1] == "device"
+             and (not model or f"model:{model}" in ln.split())]
     usb = [s for s in ready if ":" not in s]
     return (usb or ready or [""])[0]
 
 
 class GameWatcher:
-    def __init__(self, adb: str, serial: str = "") -> None:
+    def __init__(self, adb: str, serial: str = "", model: str = "") -> None:
         self.adb = adb
         self.serial = serial
+        self.model = model
 
         self.fixed = bool(serial)
 
@@ -101,7 +104,7 @@ class GameWatcher:
 
     def _shell(self, *args: str) -> str | None:
         if not self.serial:
-            self.serial = pick_device(self._run("devices") or "")
+            self.serial = pick_device(self._run("devices", "-l") or "", self.model)
             if not self.serial:
                 return None
         out = self._run("-s", self.serial, "shell", *args)

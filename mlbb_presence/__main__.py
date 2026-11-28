@@ -47,7 +47,7 @@ def main(argv: list[str] | None = None) -> int:
     stop = threading.Event()
     threading.Thread(target=run_feed, args=(cfg.viewer_url, feed, stop), daemon=True).start()
 
-    game = GameWatcher(cfg.adb, cfg.adb_serial)
+    game = GameWatcher(cfg.adb, cfg.adb_serial, cfg.adb_model)
     lobby = LobbyTracker(memory=ROOT / ".lobby_room.json")
     chrome = find_chrome(cfg.chrome) if cfg.tool_tabs and not args.dry_run else ""
     tabs = ToolTabs(chrome, port_in_use) if chrome else None

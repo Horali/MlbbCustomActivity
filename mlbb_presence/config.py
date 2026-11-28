@@ -37,6 +37,7 @@ class Config:
     match_timer: bool = False
     adb: str = str(DEFAULT_ADB)
     adb_serial: str = ""
+    adb_model: str = ""  # only watch the phone with this adb model (e.g. SM_S936B)
     viewer_url: str = "http://127.0.0.1:8765/events"
     fixlag_dir: str = ""  # set: the bridge starts the FixLag chat viewer while MLBB runs
     mapper_url: str = ""  # set: the bridge also starts the FixLag lag mapper on this port
@@ -59,6 +60,7 @@ class Config:
             match_timer=_flag("MATCH_TIMER"),
             adb=env("ADB", str(DEFAULT_ADB)),
             adb_serial=env("ADB_SERIAL", ""),
+            adb_model=env("ADB_MODEL", ""),
             viewer_url=env("VIEWER_URL", "http://127.0.0.1:8765/events"),
             fixlag_dir=env("FIXLAG_DIR", ""),
             mapper_url=env("MAPPER_URL", ""),

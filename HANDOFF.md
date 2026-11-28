@@ -13,7 +13,12 @@ A Discord Rich Presence card for MLBB played on the phone: game, timer, mode, pa
 - Autostart: `tools/install_autostart.ps1` puts a hidden start script in the Windows Startup folder (log `%LOCALAPPDATA%\mlbb_presence/bridge.log`). While MLBB runs, the bridge starts the lobby capture and, with `FIXLAG_DIR` in `.env`, the FixLag chat viewer; it stops both when MLBB closes.
 
 ## Active tasks
+- Activity Controller link (Phase 2): task file `handoffs/phase2-connect-projects.md` in the DiscordActivityController repo.
 - [handoffs/discord-presence.md](handoffs/discord-presence.md) — Phase 1 bridge built; needs a live test evening and the Live share link.
+
+## Activity Controller
+- `mlbb_presence/controller_client.py` (a copy from DiscordActivityController) checks in at `127.0.0.1:47400` every 2 s.
+- `Sender` shows the card only when the light is green or `none` (no controller). A light change skips the 15 s debounce.
 
 ## Where to look
 - Plan: [PLAN.md](PLAN.md)

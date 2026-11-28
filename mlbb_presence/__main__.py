@@ -20,6 +20,7 @@ from .lobby import LobbyTracker
 from .services import Services
 from .mapper import to_presence
 from .match import MatchFeed, run_feed
+from .controller_client import ControllerClient
 from .sender import Sender
 from .state import StateMachine
 
@@ -50,7 +51,12 @@ def main(argv: list[str] | None = None) -> int:
     services = Services(cfg.adb, lobby, lobby=not args.no_lobby,
                         fixlag_dir=cfg.fixlag_dir, viewer_url=cfg.viewer_url)
     machine = StateMachine()
-    sender = None if args.dry_run else Sender(cfg.app_id)
+    # Activity Controller (traffic light). No controller = the card works alone.
+    wake = threading.Event()
+    controller = None if args.dry_run else ControllerClient("mlbb", "Mobile Legends", on_change=wake.set)
+    if controller is not None:
+        controller.start()
+    sender = None if args.dry_run else Sender(cfg.app_id, controller=controller)
     last_printed: object = ()
     profile_at = 0.0
     try:
@@ -72,7 +78,8 @@ def main(argv: list[str] | None = None) -> int:
             elif payload != last_printed:
                 print(state.phase, json.dumps(payload, ensure_ascii=False), flush=True)
                 last_printed = payload
-            time.sleep(POLL_SECONDS)
+            wake.wait(POLL_SECONDS)  # a light change wakes the loop at once
+            wake.clear()
     except KeyboardInterrupt:
         pass
     finally:
@@ -82,6 +89,8 @@ def main(argv: list[str] | None = None) -> int:
         if sender is not None:
             sender.push(None, float("inf"))
             sender.close()
+        if controller is not None:
+            controller.stop()
     return 0
 
 

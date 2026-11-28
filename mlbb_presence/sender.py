@@ -36,10 +36,28 @@ class Debouncer:
 
 
 class Sender:
-    def __init__(self, app_id: str) -> None:
+    """controller: an optional ControllerClient (Activity Controller traffic light).
+    green or none (no controller) = show the card; red or wait = clear it."""
+
+    def __init__(self, app_id: str, controller: Any = None) -> None:
         self.app_id = app_id
         self.rpc = None
         self.debounce = Debouncer()
+        self.controller = controller
+        self._light: str | None = None
+
+    def _showing(self) -> bool:
+        return self.rpc is not None and self.debounce.sent not in (None, _UNSET)
+
+    def _report(self, payload: dict[str, Any] | None) -> None:
+        if self.controller is None:
+            return
+        preview = None
+        if payload is not None:
+            preview = {"headline": "Playing Mobile Legends",
+                       "details": str(payload.get("details") or ""),
+                       "state": str(payload.get("state") or "")}
+        self.controller.update(online=payload is not None, showing=self._showing(), preview=preview)
 
     def _connect(self) -> bool:
         if self.rpc is not None:
@@ -57,10 +75,23 @@ class Sender:
         return True
 
     def push(self, payload: dict[str, Any] | None, now: float) -> None:
-        if not self.debounce.due(payload, now):
-            return
-        if not self._connect():
-            return
+        light = self.controller.light if self.controller is not None else "none"
+        wanted = payload
+        if light in ("red", "wait"):
+            payload = None
+        # A light change goes out at once: a red must not wait for the 15 s debounce.
+        light_changed = light != self._light and self._light is not None
+        self._light = light
+        try:
+            if not light_changed and not self.debounce.due(payload, now):
+                return
+            if not self._connect():
+                return
+            self._send(payload, now)
+        finally:
+            self._report(wanted)
+
+    def _send(self, payload: dict[str, Any] | None, now: float) -> None:
         try:
             if payload is None:
                 self.rpc.clear()
@@ -69,6 +100,8 @@ class Sender:
                 self.rpc.update(**payload)
                 log.info("presence: %s | %s", payload.get("details"), payload.get("state"))
             self.debounce.mark(payload, now)
+            if self.controller is not None:
+                self.controller.poke()
         except Exception as exc:  # Discord closed: reconnect next time
             log.warning("discord update failed, will reconnect: %s", exc)
             self.close()

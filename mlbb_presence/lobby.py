@@ -37,7 +37,7 @@ ROOM_MIDS = frozenset({
 })
 LEAVE_MID = 11205
 BACK_MID = 20103
-QUEUE_MID = 19010   # queue state push: v8 1 = in queue; 2, 4 = not (cancel, match not accepted)
+QUEUE_MID = 19010   # queue state push: v8 1 = in queue; 2, 3, 4 = not (3 cancel, 4 not accepted)
 FOUND_MID = 20423   # a match was found: the ready check starts
 FOUND_SECONDS = 45.0  # the ready check lasts about 30 s
 KEEPALIVE_MID = 11241                   # every 5 s while in a room: {v0 room, v1 pvp type}

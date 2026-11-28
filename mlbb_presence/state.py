@@ -11,6 +11,8 @@ from .match import MatchInfo
 CLOSED = "CLOSED"    # game not running: clear the presence
 IDLE = "IDLE"        # game running in the background
 LOBBY = "LOBBY"
+QUEUE = "QUEUE"      # matchmaking
+FOUND = "FOUND"      # match found: ready check
 DRAFT = "DRAFT"
 LOADING = "LOADING"
 BATTLE = "BATTLE"
@@ -104,7 +106,11 @@ class StateMachine:
         self.match_start = None
         self.last_match = None
         afk = game.idle_seconds is not None and game.idle_seconds >= AFK_SECONDS
-        self.phase = LOBBY if game.foreground and not afk else IDLE
+        queue = lobby.queue if lobby is not None else ""
+        if queue:  # in queue you are not idle, even with the game in the background
+            self.phase = FOUND if queue == "found" else QUEUE
+        else:
+            self.phase = LOBBY if game.foreground and not afk else IDLE
         return self._state()
 
     def _end_match(self, match: MatchInfo, now: float) -> GameState:
@@ -117,7 +123,7 @@ class StateMachine:
 
     def _state(self) -> GameState:
         m = self.last_match if self.phase in (DRAFT, LOADING, BATTLE, AFTER) else None
-        room = self.lobby if self.phase == LOBBY else None
+        room = self.lobby if self.phase in (LOBBY, QUEUE, FOUND) else None
         if room is not None:
             return GameState(
                 phase=self.phase,
@@ -135,8 +141,9 @@ class StateMachine:
         if m is not None and prev is not None and (not mode or mode.startswith("Mode ")):
             # FixLag does not know arcade modes (e.g. Card Brawl): use the lobby room.
             mode = prev.mode or mode
-            party = party or prev.party_size
             is_custom = is_custom or prev.is_custom
+        if m is not None and prev is not None:
+            party = party or prev.party_size  # the feed often has no party size: use the room
         return GameState(
             phase=self.phase,
             session_start=self.session_start,

@@ -37,6 +37,9 @@ ROOM_MIDS = frozenset({
 })
 LEAVE_MID = 11205
 BACK_MID = 20103
+QUEUE_MID = 19010   # queue state push: v8 1 = in queue; 2, 4 = not (cancel, match not accepted)
+FOUND_MID = 20423   # a match was found: the ready check starts
+FOUND_SECONDS = 45.0  # the ready check lasts about 30 s
 KEEPALIVE_MID = 11241                   # every 5 s while in a room: {v0 room, v1 pvp type}
 # No keepalive comes while you queue or play, or after a match, but the room stays
 # (same id all session). So keep it until a leave message, game close, or this long.
@@ -74,6 +77,7 @@ class LobbyInfo:
     pvp_type: int
     party_size: int | None
     back_at: float | None = field(default=None, compare=False)  # last 20103: team in the room
+    queue: str = field(default="", compare=False)  # "", "queue" or "found"
 
     @property
     def mode(self) -> str:
@@ -161,7 +165,7 @@ def parse_message(payload: bytes) -> tuple[int, dict[tuple[str, int], Any]] | No
         return None
     try:
         mid, _ = read_varint(payload, 2)
-        if mid in PRIVATE_MIDS or (mid not in ROOM_MIDS and mid != KEEPALIVE_MID):
+        if mid in PRIVATE_MIDS or (mid not in ROOM_MIDS and mid not in (KEEPALIVE_MID, QUEUE_MID, FOUND_MID)):
             return None
         top, _ = parse_struct(payload, 1)
         raw = top.get(("b", 6))
@@ -193,6 +197,8 @@ class LobbyTracker:
         # 20103 comes when the team is back in the room: after a match, or when a found
         # match is cancelled (someone did not accept). It does not come at draft start.
         self.back_at: float | None = None
+        self.queue_state = ""  # "", "queue", "found"
+        self.found_at: float | None = None
         # Last room and its size, kept on disk: a restarted bridge inside the same room
         # gets only keepalives (no player list), so it reuses the saved size.
         self.memory = memory
@@ -205,7 +211,8 @@ class LobbyTracker:
             self.self_uid = self._saved.get("self_uid")
             # Restarted bridge in the same session: keep the room until a new message.
             s = self._saved
-            if {"room_id", "pvp_type", "seen_at"} <= s.keys() and                     time.time() - s["seen_at"] < ROOM_STALE_SECONDS:
+            if {"room_id", "pvp_type", "seen_at"} <= s.keys() and (
+                    time.time() - s["seen_at"] < ROOM_STALE_SECONDS):
                 self.room_id, self.pvp_type = s["room_id"], s["pvp_type"]
                 self.party_size, self.seen_at = s.get("party_size"), float(s["seen_at"])
 
@@ -225,6 +232,15 @@ class LobbyTracker:
                     self._save()
                 return
 
+            if mid == QUEUE_MID:
+                self.queue_state = "queue" if body.get(("v", 8)) == 1 else ""
+                log.info("queue %s (v8 %s)", self.queue_state or "off", body.get(("v", 8)))
+                return
+            if mid == FOUND_MID:
+                self.queue_state, self.found_at = "found", now
+                log.info("match found")
+                return
+
             room = next((v for k, v in body.items() if k[0] == "s" and _is_room(v)), None)
             if room is None:
                 return
@@ -237,6 +253,7 @@ class LobbyTracker:
                     return
             if mid == BACK_MID:
                 self.back_at = now
+                self.queue_state = ""  # back in the room: no queue, no ready check
             if mid == 11201 and len(uids) == 1:
                 self.self_uid = uids[0]
             self.room_id = room[("v", 0)]
@@ -266,6 +283,7 @@ class LobbyTracker:
 
     def _clear(self) -> None:
         self.room_id = self.pvp_type = self.party_size = self.seen_at = None
+        self.queue_state = ""
         log.info("left the lobby room")
         self._save()
 
@@ -275,7 +293,10 @@ class LobbyTracker:
                 return None
             assert self.room_id is not None and self.pvp_type is not None
             # Unknown count (bridge started inside a room): show solo until the room changes.
-            return LobbyInfo(self.room_id, self.pvp_type, self.party_size or 1, self.back_at)
+            queue = self.queue_state
+            if queue == "found" and (self.found_at is None or now - self.found_at > FOUND_SECONDS):
+                queue = ""  # the draft started (or the check ended without a message)
+            return LobbyInfo(self.room_id, self.pvp_type, self.party_size or 1, self.back_at, queue)
 
 
 # ---------------------------------------------------------------- pcap + tcp

@@ -7,11 +7,13 @@ from __future__ import annotations
 from typing import Any
 
 from .config import Config
-from .state import AFTER, BATTLE, CLOSED, DRAFT, IDLE, LOADING, LOBBY, GameState
+from .state import AFTER, BATTLE, CLOSED, DRAFT, FOUND, IDLE, LOADING, LOBBY, QUEUE, GameState
 
 PHASE_TEXT = {
     IDLE: "Idle",
     LOBBY: "In lobby",
+    QUEUE: "In queue",
+    FOUND: "Match found",
     DRAFT: "Draft pick",
     LOADING: "Loading",
     BATTLE: "In match",
@@ -49,7 +51,7 @@ def to_presence(s: GameState, cfg: Config) -> dict[str, Any] | None:
     ign = s.ign or cfg.ign
     level = f"Lv. {cfg.level}" if cfg.level else ""
     in_match = s.phase in (DRAFT, LOADING, BATTLE, AFTER)
-    with_mode = in_match or s.phase == LOBBY  # the lobby room also knows mode and party
+    with_mode = in_match or s.phase in (LOBBY, QUEUE, FOUND)  # the room knows mode and party
     hero = s.hero if in_match else ""
     details = " · ".join(x for x in (level, ign, hero) if x) or GAME_NAME
 

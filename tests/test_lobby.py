@@ -277,3 +277,32 @@ def test_cancelled_match_goes_back_to_lobby():
     s = sm.update(ON, draft, 1.0, 125.0, back)
     assert s.phase == S.LOBBY and s.mode == "Classic"
     assert sm.update(ON, draft, 1.0, 130.0, back).phase == S.LOBBY  # stays ended
+
+
+def test_queue_found_and_back_to_lobby():
+    tr = LobbyTracker()
+    feed(tr, 11201, [(1, room(2, [ME]))], 0)
+    tr.on_message(19010, {("v", 8): 1}, 10.0)  # queue started
+    assert tr.current(11.0).queue == "queue"
+    tr.on_message(20423, {("v", 1): 2}, 15.0)  # match found
+    assert tr.current(16.0).queue == "found"
+    assert tr.current(15.0 + 60).queue == ""  # ready check long over
+    tr.on_message(19010, {("v", 8): 2}, 20.0)  # cancelled or not accepted
+    assert tr.current(21.0).queue == ""
+
+
+def test_queue_phase_text_keeps_mode_and_party():
+    sm = StateMachine()
+    p = to_presence(sm.update(ON, None, None, 2000.0, LobbyInfo(ROOM, 2, 3, queue="queue")), CFG)
+    assert p["state"] == "Ranked · In queue (3 of 5)"
+    p = to_presence(sm.update(ON, None, None, 2005.0, LobbyInfo(ROOM, 2, 3, queue="found")), CFG)
+    assert p["state"] == "Ranked · Match found (3 of 5)"
+
+
+def test_draft_uses_room_party_when_feed_has_none():
+    from mlbb_presence.match import MatchInfo
+    sm = StateMachine()
+    sm.update(ON, None, None, 2000.0, LobbyInfo(ROOM, 2, 1))
+    draft = MatchInfo(match_id="m9", phase=S.DRAFT, mode="Ranked", party_size=None)
+    p = to_presence(sm.update(ON, draft, 1.0, 2010.0, LobbyInfo(ROOM, 2, 1)), CFG)
+    assert p["state"] == "Ranked · Draft pick (1 of 5)"

@@ -1,6 +1,6 @@
 Status: active
 Needs user: one play session for the live test
-Updated: 2026-11-28 05:40
+Updated: 2026-11-28 13:05
 Agent: Claude desktop app (Code tab), Opus 5.5, Phase 1 session
 
 ## Goal and why
@@ -13,6 +13,8 @@ Show a Discord Rich Presence card while the user plays MLBB on the phone (SM-S93
 - Checked on a FixLag pcap replay (`draft_LIVE6.pcap`): the feed gives IGN `naradira`, Ranked, 5-stack, hero Nolan.
 - Dry run on the phone (wireless, 2 adb entries): auto serial pick works; MLBB closed -> `CLOSED`.
 - FixLag `players[]` has `name`, `hero_name`, `party_size`, but no level. IGN and level come from the game prefs over root adb (`OfflineRoleName`, `OfflineRoleLevel` = 113); FixLag's name wins in a match; `.env` is the fallback.
+- Idle: after `AFK_SECONDS` (300 s) with no touch (`dumpsys power` lastUserActivityTime) the card says Idle. The phone screen-off timeout is never, so MLBB stays on screen.
+- Serial change (USB unplugged): `Services.update` moves the lobby capture and restarts the chat viewer on the new serial.
 - Watch button: off unless `LIVE=1` and `WATCH_URL` is https.
 
 ## Next steps

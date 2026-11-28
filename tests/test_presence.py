@@ -194,3 +194,27 @@ def test_parse_profile_reads_name_and_level():
             '    <int name="OfflineRoleLevel" value="113" />\n')
     assert parse_profile(text) == ("nara&dira", "113")
     assert parse_profile("") == ("", "")
+
+
+def test_parse_idle():
+    from mlbb_presence.game import parse_idle
+    out = "lastUserActivityTime=253005892 (84099 ms ago)\nlastUserActivityTimeNoChangeLights=1 (5 ms ago)"
+    assert parse_idle(out) == 84.099
+    assert parse_idle("nothing") is None
+
+
+def test_no_touch_in_lobby_is_idle():
+    sm = StateMachine()
+    assert sm.update(GameInfo(True, True, 5.0, idle_seconds=30), None, None, 10).phase == S.LOBBY
+    assert sm.update(GameInfo(True, True, 5.0, idle_seconds=S.AFK_SECONDS), None, None, 20).phase == S.IDLE
+    assert sm.update(GameInfo(True, True, 5.0, idle_seconds=2), None, None, 30).phase == S.LOBBY
+
+
+def test_capture_follows_new_serial():
+    from mlbb_presence.lobby import LobbyTracker
+    from mlbb_presence.services import Services
+    svc = Services("adb", LobbyTracker(), lobby=False)
+    svc.start("USB1")
+    svc.update(True, "192.168.1.17:5555")
+    assert svc.serial == "192.168.1.17:5555"
+    svc._stop = None

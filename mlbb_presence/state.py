@@ -19,6 +19,7 @@ AFTER = "AFTER"      # match ended, shown for AFTER_SECONDS
 BATTLE_SILENCE = 20.0   # no match packets for this long in Battle -> match ended
 PREGAME_SILENCE = 90.0  # draft or loading with no packets -> back to lobby
 AFTER_SECONDS = 60.0
+AFK_SECONDS = 300.0     # no touch on the phone for this long in the lobby -> Idle
 
 
 @dataclass(frozen=True)
@@ -92,7 +93,8 @@ class StateMachine:
         self.after_until = None
         self.match_start = None
         self.last_match = None
-        self.phase = LOBBY if game.foreground else IDLE
+        afk = game.idle_seconds is not None and game.idle_seconds >= AFK_SECONDS
+        self.phase = LOBBY if game.foreground and not afk else IDLE
         return self._state()
 
     def _end_match(self, match: MatchInfo, now: float) -> GameState:

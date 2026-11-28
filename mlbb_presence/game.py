@@ -15,6 +15,7 @@ class GameInfo:
     running: bool
     foreground: bool = False
     started_at: float | None = None  # unix time of the game process start
+    idle_seconds: float | None = None  # time since the last touch on the phone
 
 
 def parse_etime(etime: str) -> int | None:
@@ -52,6 +53,15 @@ def parse_foreground(output: str) -> bool:
         if ("ResumedActivity" in line) and PACKAGE in line:
             return True
     return False
+
+
+_IDLE_RE = re.compile(r"lastUserActivityTime=\d+ \((\d+) ms ago\)")
+
+
+def parse_idle(output: str) -> float | None:
+    """Seconds since the last touch, from `dumpsys power`."""
+    m = _IDLE_RE.search(output)
+    return int(m.group(1)) / 1000 if m else None
 
 
 PREFS = f"/data/data/{PACKAGE}/shared_prefs/{PACKAGE}.v2.playerprefs.xml"
@@ -113,4 +123,6 @@ class GameWatcher:
         if not running:
             return GameInfo(running=False)
         acts = self._shell("dumpsys", "activity", "activities") or ""
-        return GameInfo(running=True, foreground=parse_foreground(acts), started_at=started)
+        foreground = parse_foreground(acts)
+        idle = parse_idle(self._shell("dumpsys", "power") or "") if foreground else None
+        return GameInfo(running=True, foreground=foreground, started_at=started, idle_seconds=idle)

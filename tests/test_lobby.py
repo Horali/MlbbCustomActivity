@@ -242,7 +242,9 @@ def test_services_follow_the_game():
     assert sv.running
     sv.update(None, "dev:1")       # phone not reachable: keep going
     assert sv.running
-    sv.update(False, "dev:1")      # game closed
+    sv.update(False, "dev:1", now=1000.0)  # game closed: wait one minute first
+    assert sv.running
+    sv.update(False, "dev:1", now=1000.0 + sv.grace_seconds)
     assert not sv.running
 
 

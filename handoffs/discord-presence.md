@@ -1,6 +1,6 @@
 Status: active
 Needs user: one play session for the live test
-Updated: 2026-11-28 13:15
+Updated: 2026-11-28 14:30
 Agent: Claude desktop app (Code tab), Opus 5.5, Phase 1 session
 
 ## Goal and why
@@ -15,6 +15,7 @@ Show a Discord Rich Presence card while the user plays MLBB on the phone (SM-S93
 - FixLag `players[]` has `name`, `hero_name`, `party_size`, but no level. IGN and level come from the game prefs over root adb (`OfflineRoleName`, `OfflineRoleLevel` = 113); FixLag's name wins in a match; `.env` is the fallback.
 - Idle: after `AFK_SECONDS` (300 s) with no touch (`dumpsys power` lastUserActivityTime) the card says Idle. The phone screen-off timeout is never, so MLBB stays on screen.
 - Serial change (USB unplugged): `Services.update` moves the lobby capture and restarts the chat viewer on the new serial.
+- Lobby room: no keepalive (11241) while you queue, play, or after a match; the room id stays all session. The tracker keeps the room until leave (11205), game close, or 30 min; `.lobby_room.json` also saves pvp_type and seen_at.
 - Party count: our own "(n of 5)" state text, no Discord party_size, so the timer stays on the bottom line (user choice 2026-11-28 13:15; the people icon is lost).
 - Watch button: off unless `LIVE=1` and `WATCH_URL` is https.
 

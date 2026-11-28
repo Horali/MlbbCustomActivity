@@ -49,6 +49,14 @@ class Services:
         """game_running None = phone not reachable: change nothing."""
         if game_running is None:
             return
+        if self.running and serial and serial != self.serial:
+            # USB unplugged or the wireless port changed: the capture thread reads
+            # self.serial on each restart, so it moves to the new link.
+            log.info("phone serial changed: %s -> %s", self.serial, serial)
+            self.serial = serial
+            if self._viewer is not None:  # our chat viewer is bound to the old serial
+                self._stop_viewer()
+                self._start_viewer(serial)
         if game_running and not self.running and serial:
             self.start(serial)
         elif not game_running and self.running:
@@ -61,6 +69,9 @@ class Services:
         if self.lobby:
             threading.Thread(target=run_capture, args=(self.adb, lambda: self.serial, self.tracker,
                                                        self._stop), daemon=True).start()
+        self._start_viewer(serial)
+
+    def _start_viewer(self, serial: str) -> None:
         if self.fixlag_dir and self.viewer_url and not port_in_use(self.viewer_url):
             port = urlparse(self.viewer_url).port or 8765
             cmd = [sys.executable, "-m", "tools.chat_viewer", "--adb", serial, "--port", str(port),
@@ -77,6 +88,9 @@ class Services:
         if self._stop is not None:
             self._stop.set()
             self._stop = None
+        self._stop_viewer()
+
+    def _stop_viewer(self) -> None:
         if self._viewer is not None:
             self._viewer.terminate()
             try:

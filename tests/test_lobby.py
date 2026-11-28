@@ -158,8 +158,7 @@ def test_lobby_room_shows_mode_and_party_badge():
     m = StateMachine()
     s = m.update(ON, None, None, 2000.0, LobbyInfo(ROOM, 2, 2))
     p = to_presence(s, CFG)
-    assert p["state"] == "Ranked · In lobby"
-    assert p["party_size"] == [2, 5]
+    assert p["state"] == "Ranked · In lobby (2 of 5)" and "party_size" not in p
     assert p["small_image"] == "party_2"
     assert p["small_text"] == "Duo queue (2 of 5)"
 
@@ -186,7 +185,7 @@ def test_badge_icon_switch_keeps_party_text():
     from dataclasses import replace
     s = StateMachine().update(ON, None, None, 2000.0, LobbyInfo(ROOM, 2, 1))
     p = to_presence(s, replace(CFG, badge_icon=False))
-    assert p["party_size"] == [1, 5]
+    assert p["state"].endswith("(1 of 5)")
     assert "small_image" not in p and "small_text" not in p
 
 
@@ -222,9 +221,9 @@ def test_draft_without_mode_uses_lobby_room():
 def test_draft_text_only_for_draft_modes():
     from mlbb_presence.state import GameState
     p = to_presence(GameState(S.DRAFT, mode="Card Brawl", party_size=3), CFG)
-    assert p["state"] == "Card Brawl · Hero selection"
+    assert p["state"] == "Card Brawl · Hero selection (3 of 5)"
     p = to_presence(GameState(S.DRAFT, mode="Ranked", party_size=2), CFG)
-    assert p["state"] == "Ranked · Draft pick"
+    assert p["state"] == "Ranked · Draft pick (2 of 5)"
 
 
 def test_fixlag_mode_number_gets_a_name():

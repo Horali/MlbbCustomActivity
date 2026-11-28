@@ -22,6 +22,9 @@ from .lobby import LobbyTracker, run_capture
 log = logging.getLogger(__name__)
 # Both FixLag tools capture this port range; one pkill ends the tcpdump of each.
 FIXLAG_TCPDUMP = "udp portrange 5000-5999"
+LOBBY_TCPDUMP = "tcp src port 30101"
+# Old lobby recorder and lag mapper filters; only cleaned when no FixLag tool runs.
+OTHER_TCPDUMP = "tcp port 30101"
 GRACE_SECONDS = 60.0
 
 
@@ -56,6 +59,7 @@ class Services:
         self._stop: threading.Event | None = None
         self._tools: dict[str, subprocess.Popen] = {}
         self._closed_since: float | None = None
+        self._cleaned = False  # one cleanup per bridge run, also when MLBB is closed
 
     @property
     def running(self) -> bool:
@@ -74,6 +78,9 @@ class Services:
             if self._tools:  # our FixLag tools are bound to the old serial
                 self._stop_tools()
                 self._start_tools(serial)
+        if not game_running and not self.running and serial and not self._cleaned:
+            self.serial = serial
+            self.clean_phone()
         if game_running:
             if self._closed_since is not None:
                 log.info("MLBB back within %.0f s: keeping the tools", self.grace_seconds)
@@ -92,6 +99,7 @@ class Services:
         self._stop = threading.Event()
         self._closed_since = None
         log.info("MLBB opened: starting captures on %s", serial)
+        self.clean_phone()
         if self.lobby:
             threading.Thread(target=run_capture, args=(self.adb, lambda: self.serial, self.tracker,
                                                        self._stop), daemon=True).start()
@@ -138,6 +146,7 @@ class Services:
         if self.tabs is not None:
             self.tabs.close()
         self._stop_tools()
+        self.clean_phone()  # also copies that lost their laptop side during the session
 
     def _stop_tools(self) -> None:
         if not self._tools:
@@ -152,11 +161,31 @@ class Services:
         self._tools.clear()
         self._pkill(FIXLAG_TCPDUMP)
 
-    def _pkill(self, pattern: str) -> None:
-        if not self.serial:
+    def stale_patterns(self) -> list[str]:
+        """tcpdump filters to end before a start. A hard stop of the bridge (crash,
+        task kill) leaves the phone side of `adb exec-out` running, so copies pile up.
+        A FixLag tool that someone started by hand keeps its capture."""
+        patterns = [LOBBY_TCPDUMP] if self.lobby else []
+        urls = [u for u in (self.viewer_url, self.mapper_url) if u]
+        if self.fixlag_dir and urls and not any(port_in_use(u) for u in urls):
+            patterns += [FIXLAG_TCPDUMP, OTHER_TCPDUMP]
+        return patterns
+
+    def clean_phone(self) -> None:
+        self._cleaned = True
+        patterns = self.stale_patterns()
+        if patterns:
+            log.info("ending old tcpdump copies on the phone: %s", ", ".join(patterns))
+            self._pkill(*patterns)
+
+    def _pkill(self, *patterns: str) -> None:
+        if not self.serial or not patterns:
             return
+        # "[u]dp ..." still matches tcpdump, but not this shell's own command line, so
+        # the first pkill does not end the shell before the other pkill commands run.
+        script = "; ".join(f'pkill -f \"[{p[0]}]{p[1:]}\"' for p in patterns)
         try:
-            subprocess.run([self.adb, "-s", self.serial, "shell", f"su -c 'pkill -f \"{pattern}\"'"],
+            subprocess.run([self.adb, "-s", self.serial, "shell", f"su -c '{script}'"],
                            capture_output=True, timeout=10)
         except (OSError, subprocess.TimeoutExpired):
             pass

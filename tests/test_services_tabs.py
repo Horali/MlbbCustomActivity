@@ -78,3 +78,51 @@ def test_chrome_uses_its_own_profile():
     cmd = chrome_command("chrome.exe", ["http://a/", "http://b/"])
     assert any(a.startswith("--user-data-dir=") for a in cmd)
     assert cmd[-2:] == ["http://a/", "http://b/"]
+
+
+def test_old_tcpdumps_are_cleaned_before_a_start(monkeypatch):
+    import mlbb_presence.services as services
+    monkeypatch.setattr(services, "port_in_use", lambda url: False)
+    sv = Services("adb", LobbyTracker(), fixlag_dir=".", viewer_url="http://127.0.0.1:8790/events",
+                  mapper_url="http://127.0.0.1:8791/")
+    assert sv.stale_patterns() == ["tcp src port 30101", "udp portrange 5000-5999", "tcp port 30101"]
+
+
+def test_a_hand_started_tool_keeps_its_tcpdump(monkeypatch):
+    import mlbb_presence.services as services
+    monkeypatch.setattr(services, "port_in_use", lambda url: "8790" in url)
+    sv = Services("adb", LobbyTracker(), fixlag_dir=".", viewer_url="http://127.0.0.1:8790/events",
+                  mapper_url="http://127.0.0.1:8791/")
+    assert sv.stale_patterns() == ["tcp src port 30101"]
+
+
+def test_pkill_sends_one_su_call(monkeypatch):
+    import mlbb_presence.services as services
+    calls = []
+    monkeypatch.setattr(services.subprocess, "run", lambda cmd, **kw: calls.append(cmd))
+    sv = Services("adb", LobbyTracker(), lobby=False)
+    sv.serial = "dev:1"
+    sv._pkill("a b", "c")
+    assert calls == [["adb", "-s", "dev:1", "shell", "su -c 'pkill -f \"[a] b\"; pkill -f \"[c]\"'"]]
+
+
+def test_cleanup_runs_once_when_the_bridge_starts_with_mlbb_closed(monkeypatch):
+    sv = Services("adb", LobbyTracker(), lobby=False)
+    calls = []
+    monkeypatch.setattr(sv, "_pkill", lambda *p: calls.append(p))
+    monkeypatch.setattr(sv, "stale_patterns", lambda: ["x"])
+    sv.update(False, "dev:1", now=0.0)
+    sv.update(False, "dev:1", now=5.0)
+    assert calls == [("x",)] and not sv.running
+
+
+def test_cleanup_runs_after_the_tools_stop(monkeypatch):
+    tabs = FakeTabs()
+    sv = make(tabs)
+    calls = []
+    monkeypatch.setattr(sv, "_pkill", lambda *p: calls.append(p))
+    monkeypatch.setattr(sv, "stale_patterns", lambda: ["x"])
+    sv.update(True, "dev:1", now=0.0)
+    sv.update(False, "dev:1", now=1.0)
+    sv.update(False, "dev:1", now=61.0)
+    assert len(calls) == 2  # once at start, once after the stop

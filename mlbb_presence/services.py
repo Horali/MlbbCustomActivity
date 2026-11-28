@@ -85,6 +85,7 @@ class Services:
 
     def stop(self) -> None:
         log.info("MLBB closed: stopping captures")
+        self.tracker.clear()
         if self._stop is not None:
             self._stop.set()
             self._stop = None

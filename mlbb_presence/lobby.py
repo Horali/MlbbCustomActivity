@@ -37,7 +37,9 @@ ROOM_MIDS = frozenset({
 })
 LEAVE_MID = 11205
 KEEPALIVE_MID = 11241                   # every 5 s while in a room: {v0 room, v1 pvp type}
-ROOM_STALE_SECONDS = 15.0               # no room packet for this long -> not in a room
+# No keepalive comes while you queue or play, or after a match, but the room stays
+# (same id all session). So keep it until a leave message, game close, or this long.
+ROOM_STALE_SECONDS = 1800.0
 
 PVP_LABELS = {
     1: "Classic",
@@ -196,6 +198,11 @@ class LobbyTracker:
             except (OSError, ValueError, AttributeError):
                 self._saved = {}
             self.self_uid = self._saved.get("self_uid")
+            # Restarted bridge in the same session: keep the room until a new message.
+            s = self._saved
+            if {"room_id", "pvp_type", "seen_at"} <= s.keys() and                     time.time() - s["seen_at"] < ROOM_STALE_SECONDS:
+                self.room_id, self.pvp_type = s["room_id"], s["pvp_type"]
+                self.party_size, self.seen_at = s.get("party_size"), float(s["seen_at"])
 
     def on_message(self, mid: int, body: dict[tuple[str, int], Any], now: float) -> None:
         with self._lock:
@@ -209,6 +216,8 @@ class LobbyTracker:
                     log.info("lobby room %s, party %s (saved)", self.room_id, saved)
                 self.pvp_type = body[("v", 1)]
                 self.seen_at = now
+                if now - self._saved.get("seen_at", 0) >= 60:  # keep the disk copy fresh
+                    self._save()
                 return
 
             room = next((v for k, v in body.items() if k[0] == "s" and _is_room(v)), None)
@@ -232,13 +241,21 @@ class LobbyTracker:
             self._save()
 
     def _save(self) -> None:
-        self._saved = {k: v for k, v in (("room_id", self.room_id), ("party_size", self.party_size),
-                                         ("self_uid", self.self_uid)) if v is not None}
+        seen = int(self.seen_at) if self.seen_at is not None else None
+        self._saved = {k: v for k, v in (("room_id", self.room_id), ("pvp_type", self.pvp_type),
+                                         ("party_size", self.party_size), ("self_uid", self.self_uid),
+                                         ("seen_at", seen)) if v is not None}
         if self.memory is not None:
             try:
                 self.memory.write_text(json.dumps(self._saved))
             except OSError:
                 pass
+
+    def clear(self) -> None:
+        """The game closed: you are in no room."""
+        with self._lock:
+            if self.room_id is not None:
+                self._clear()
 
     def _clear(self) -> None:
         self.room_id = self.pvp_type = self.party_size = self.seen_at = None

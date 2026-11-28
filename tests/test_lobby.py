@@ -90,7 +90,8 @@ def test_keepalive_keeps_room_and_silence_ends_it():
     for now in (5, 10, 15, 20):
         feed(t, 11241, [(0, ROOM), (1, 4)], now)
     assert t.current(30) == LobbyInfo(ROOM, 4, 1)
-    assert t.current(36) is None  # no packet for more than 15 s
+    assert t.current(600) == LobbyInfo(ROOM, 4, 1)  # queue or match: no keepalives
+    assert t.current(20 + 1801) is None  # no packet for more than 30 min
 
 
 def test_keepalive_of_new_room_drops_old_party_size():
@@ -243,3 +244,22 @@ def test_services_follow_the_game():
     assert sv.running
     sv.update(False, "dev:1")      # game closed
     assert not sv.running
+
+
+def test_room_survives_a_match_without_keepalives():
+    from mlbb_presence.lobby import LobbyTracker, ROOM_STALE_SECONDS
+    tr = LobbyTracker()
+    tr.on_message(11241, {("v", 0): ROOM, ("v", 1): 1}, 1000.0)
+    assert tr.current(1000.0 + 25 * 60).mode == "Classic"  # a long match, no keepalives
+    assert tr.current(1000.0 + ROOM_STALE_SECONDS + 1) is None
+    tr.clear()
+    assert tr.current(1001.0) is None
+
+
+def test_restarted_bridge_keeps_the_saved_room(tmp_path):
+    import time
+    mem = tmp_path / "room.json"
+    t1 = LobbyTracker(memory=mem)
+    feed(t1, 11203, [(2, room(1, [ME, FRIEND]))], time.time())
+    t2 = LobbyTracker(memory=mem)
+    assert t2.current(time.time()) == LobbyInfo(ROOM, 1, 2)

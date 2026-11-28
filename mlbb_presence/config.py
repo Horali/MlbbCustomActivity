@@ -39,6 +39,9 @@ class Config:
     adb_serial: str = ""
     viewer_url: str = "http://127.0.0.1:8765/events"
     fixlag_dir: str = ""  # set: the bridge starts the FixLag chat viewer while MLBB runs
+    mapper_url: str = ""  # set: the bridge also starts the FixLag lag mapper on this port
+    tool_tabs: bool = True  # open a Chrome window with a tab per tool while MLBB runs
+    chrome: str = ""  # path to chrome.exe; empty = the usual install folders
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -58,4 +61,7 @@ class Config:
             adb_serial=env("ADB_SERIAL", ""),
             viewer_url=env("VIEWER_URL", "http://127.0.0.1:8765/events"),
             fixlag_dir=env("FIXLAG_DIR", ""),
+            mapper_url=env("MAPPER_URL", ""),
+            tool_tabs=_flag("TOOL_TABS", True),
+            chrome=env("CHROME", ""),
         )

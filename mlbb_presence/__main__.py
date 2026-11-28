@@ -17,7 +17,8 @@ from dataclasses import replace
 from .config import ROOT, Config
 from .game import GameWatcher
 from .lobby import LobbyTracker
-from .services import Services
+from .browser import ToolTabs, find_chrome
+from .services import Services, port_in_use
 from .mapper import to_presence
 from .match import MatchFeed, run_feed
 from .controller_client import ControllerClient
@@ -48,8 +49,10 @@ def main(argv: list[str] | None = None) -> int:
 
     game = GameWatcher(cfg.adb, cfg.adb_serial)
     lobby = LobbyTracker(memory=ROOT / ".lobby_room.json")
-    services = Services(cfg.adb, lobby, lobby=not args.no_lobby,
-                        fixlag_dir=cfg.fixlag_dir, viewer_url=cfg.viewer_url)
+    chrome = find_chrome(cfg.chrome) if cfg.tool_tabs and not args.dry_run else ""
+    tabs = ToolTabs(chrome, port_in_use) if chrome else None
+    services = Services(cfg.adb, lobby, lobby=not args.no_lobby, fixlag_dir=cfg.fixlag_dir,
+                        viewer_url=cfg.viewer_url, mapper_url=cfg.mapper_url, tabs=tabs)
     machine = StateMachine()
     # Activity Controller (traffic light). No controller = the card works alone.
     wake = threading.Event()
@@ -70,7 +73,7 @@ def main(argv: list[str] | None = None) -> int:
                 profile_at = now
             match, age = feed.current(now)
             info = game.poll()
-            services.update(None if info is None else info.running, game.serial)
+            services.update(None if info is None else info.running, game.serial, now)
             state = machine.update(info, match, age, now, lobby.current(now))
             payload = to_presence(state, cfg)
             if sender is not None:

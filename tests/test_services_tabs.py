@@ -126,3 +126,17 @@ def test_cleanup_runs_after_the_tools_stop(monkeypatch):
     sv.update(False, "dev:1", now=1.0)
     sv.update(False, "dev:1", now=61.0)
     assert len(calls) == 2  # once at start, once after the stop
+
+
+def test_new_link_switches_the_tools_without_a_restart(monkeypatch):
+    import mlbb_presence.services as services
+    posts = []
+    monkeypatch.setattr(services, "post_source", lambda url, body: posts.append((url, body)) or True)
+    sv = make(FakeTabs())
+    sv._tools = {"chat viewer": object(), "lag mapper": object()}
+    sv._stop = object()
+    sv.serial = "USB1"
+    sv.update(True, "192.168.1.6:39059", now=0.0)
+    assert ("http://127.0.0.1:8790/events", {"mode": "switch_adb", "serial": "192.168.1.6:39059"}) in posts
+    assert ("http://127.0.0.1:8791/", {"mode": "adb", "serial": "192.168.1.6:39059"}) in posts
+    assert set(sv._tools) == {"chat viewer", "lag mapper"}  # same processes, no restart

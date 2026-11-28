@@ -7,12 +7,14 @@ runs on the phone while you do not play. A quick restart of the game keeps every
 """
 from __future__ import annotations
 
+import json
 import logging
 import socket
 import subprocess
 import sys
 import threading
 import time
+import urllib.request
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -34,6 +36,17 @@ def port_in_use(url: str) -> bool:
         with socket.create_connection((u.hostname or "127.0.0.1", u.port or 80), timeout=1):
             return True
     except OSError:
+        return False
+
+
+def post_source(url: str, body: dict) -> bool:
+    """POST /api/source on a FixLag tool. True when the tool took it."""
+    try:
+        req = urllib.request.Request(page_url(url) + "api/source", data=json.dumps(body).encode(),
+                                     headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=10) as res:
+            return 200 <= res.status < 300
+    except (OSError, ValueError):
         return False
 
 
@@ -76,8 +89,7 @@ class Services:
             log.info("phone serial changed: %s -> %s", self.serial, serial)
             self.serial = serial
             if self._tools:  # our FixLag tools are bound to the old serial
-                self._stop_tools()
-                self._start_tools(serial)
+                self._switch_tools(serial)
         if not game_running and not self.running and serial and not self._cleaned:
             self.serial = serial
             self.clean_phone()
@@ -121,10 +133,12 @@ class Services:
                                                    "--no-browser"])
         return out
 
-    def _start_tools(self, serial: str) -> None:
+    def _start_tools(self, serial: str, only: str = "") -> None:
         if not self.fixlag_dir:
             return
         for name, (url, args) in self._tool_commands(serial).items():
+            if only and name != only:
+                continue
             if port_in_use(url):  # already running (started by hand): use that one
                 log.info("%s already listens on %s", name, url)
                 continue
@@ -135,6 +149,25 @@ class Services:
                 log.info("%s started: %s", name, page_url(url))
             except OSError as exc:
                 log.warning("%s failed to start: %s", name, exc)
+
+    def _switch_tools(self, serial: str) -> None:
+        """Move the running tools to the new link and keep their live session. A
+        restart would lose the match on screen. Restart only a tool that does not answer."""
+        modes = {"chat viewer": "switch_adb", "lag mapper": "adb"}
+        cmds = self._tool_commands(serial)
+        for name in list(self._tools):
+            url = cmds[name][0] if name in cmds else ""
+            if url and post_source(url, {"mode": modes[name], "serial": serial}):
+                log.info("%s switched to %s", name, serial)
+                continue
+            log.info("%s did not switch: restarting it on %s", name, serial)
+            proc = self._tools.pop(name)
+            proc.terminate()
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+            self._start_tools(serial, only=name)
 
     def stop(self) -> None:
         log.info("MLBB closed: stopping captures and tools")

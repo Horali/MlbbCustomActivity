@@ -263,3 +263,15 @@ def test_restarted_bridge_keeps_the_saved_room(tmp_path):
     feed(t1, 11203, [(2, room(1, [ME, FRIEND]))], time.time())
     t2 = LobbyTracker(memory=mem)
     assert t2.current(time.time()) == LobbyInfo(ROOM, 1, 2)
+
+
+def test_cancelled_match_goes_back_to_lobby():
+    from mlbb_presence.match import MatchInfo
+    sm = StateMachine()
+    draft = MatchInfo(match_id="m1", phase=S.DRAFT, mode="Classic", party_size=5)
+    room = LobbyInfo(ROOM, 1, 5, back_at=50.0)
+    assert sm.update(ON, draft, 1.0, 100.0, room).phase == S.DRAFT  # old 20103: still draft
+    back = LobbyInfo(ROOM, 1, 5, back_at=120.0)  # someone did not accept
+    s = sm.update(ON, draft, 1.0, 125.0, back)
+    assert s.phase == S.LOBBY and s.mode == "Classic"
+    assert sm.update(ON, draft, 1.0, 130.0, back).phase == S.LOBBY  # stays ended

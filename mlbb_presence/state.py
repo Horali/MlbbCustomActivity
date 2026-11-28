@@ -44,6 +44,7 @@ class StateMachine:
     ended: set[str] = field(default_factory=set)
     lobby: LobbyInfo | None = None
     last_room: LobbyInfo | None = None  # the room before the match: fills an unknown mode
+    pregame_since: float | None = None  # when the bridge first saw this draft or loading
 
     def update(self, game: GameInfo | None, match: MatchInfo | None,
                pkt_age: float | None, now: float, lobby: LobbyInfo | None = None) -> GameState:
@@ -72,6 +73,15 @@ class StateMachine:
                 if match.phase == BATTLE or self.phase == BATTLE:
                     return self._end_match(match, now)
                 self.ended.add(match.match_id)  # abandoned draft
+                live = False
+
+        if live and match.phase in (DRAFT, LOADING):
+            if self.phase not in (DRAFT, LOADING):
+                self.pregame_since = now
+            back = lobby.back_at if lobby is not None else None
+            if back is not None and self.pregame_since is not None and back > self.pregame_since:
+                # The team came back to the room: the found match was cancelled.
+                self.ended.add(match.match_id)
                 live = False
 
         if live:

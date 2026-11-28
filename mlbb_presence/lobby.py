@@ -18,7 +18,7 @@ import struct
 import subprocess
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
@@ -36,6 +36,7 @@ ROOM_MIDS = frozenset({
     20103,  # room info push
 })
 LEAVE_MID = 11205
+BACK_MID = 20103
 KEEPALIVE_MID = 11241                   # every 5 s while in a room: {v0 room, v1 pvp type}
 # No keepalive comes while you queue or play, or after a match, but the room stays
 # (same id all session). So keep it until a leave message, game close, or this long.
@@ -72,6 +73,7 @@ class LobbyInfo:
     room_id: int
     pvp_type: int
     party_size: int | None
+    back_at: float | None = field(default=None, compare=False)  # last 20103: team in the room
 
     @property
     def mode(self) -> str:
@@ -188,6 +190,9 @@ class LobbyTracker:
         self.party_size: int | None = None
         self.self_uid: int | None = None
         self.seen_at: float | None = None
+        # 20103 comes when the team is back in the room: after a match, or when a found
+        # match is cancelled (someone did not accept). It does not come at draft start.
+        self.back_at: float | None = None
         # Last room and its size, kept on disk: a restarted bridge inside the same room
         # gets only keepalives (no player list), so it reuses the saved size.
         self.memory = memory
@@ -230,6 +235,8 @@ class LobbyTracker:
                         self.self_uid is not None and self.self_uid not in uids):
                     self._clear()
                     return
+            if mid == BACK_MID:
+                self.back_at = now
             if mid == 11201 and len(uids) == 1:
                 self.self_uid = uids[0]
             self.room_id = room[("v", 0)]
@@ -268,7 +275,7 @@ class LobbyTracker:
                 return None
             assert self.room_id is not None and self.pvp_type is not None
             # Unknown count (bridge started inside a room): show solo until the room changes.
-            return LobbyInfo(self.room_id, self.pvp_type, self.party_size or 1)
+            return LobbyInfo(self.room_id, self.pvp_type, self.party_size or 1, self.back_at)
 
 
 # ---------------------------------------------------------------- pcap + tcp
